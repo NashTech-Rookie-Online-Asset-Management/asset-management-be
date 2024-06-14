@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id           Int                @id @default(autoincrement())
+  staffCode    String             @unique
+  // NOTE: special character is not allowed in firstName and lastName
+  firstName    String             @db.VarChar(128)
+  lastName     String             @db.VarChar(128)
+  // NOTE: age must be older than 18 
+  dob          DateTime
+  gender       Gender?
+  type         AccountType
+  // NOTE: can not be created in Sartuday and Sunday
+  joinedAt     DateTime
+  username     String             @unique
+  password     String
+  location     Location
+  status       UserStatus         @default(CREATED)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  assignedTos  Assignment[]       @relation("assignedTo")
+  assignedBys  Assignment[]       @relation("assignedBy")
+  requestedBys ReturningRequest[] @relation("requestedBy")
+  acceptedBys  ReturningRequest[] @relation("acceptedBy")
+}
+
+model Asset {
+  id            Int          @id @default(autoincrement())
+  assetCode     String       @unique
+  name          String
+  specification String
+  installedDate DateTime
+  categoryId    Int
+  state         AssetState
+  location      Location
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  category      Category     @relation(fields: [categoryId], references: [id])
+  assignments   Assignment[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  prefix    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assets    Asset[]
+}
+
+model Assignment {
+  id               Int               @id @default(autoincrement())
+  assetId          Int
+  assignedToId     Int
+  assignedById     Int
+  assignedDate     DateTime          @default(now())
+  note             String
+  state            AssignmentState   @default(WAITING_FOR_ACCEPTANCE)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  asset            Asset             @relation(fields: [assetId], references: [id])
+  assignedTo       Account           @relation("assignedTo", fields: [assignedToId], references: [id])
+  assignedBy       Account           @relation("assignedBy", fields: [assignedById], references: [id])
+  returningRequest ReturningRequest?
+}
+
+model ReturningRequest {
+  id            Int          @id @default(autoincrement())
+  assignmentId  Int          @unique
+  requestedById Int
+  acceptedById  Int
+  returnedDate  DateTime
+  state         RequestState
+  createdAt     DateTime
+  updatedAt     DateTime
+  assignment    Assignment   @relation(fields: [assignmentId], references: [id])
+  requestedBy   Account      @relation("requestedBy", fields: [requestedById], references: [id])
+  acceptedBy    Account      @relation("acceptedBy", fields: [acceptedById], references: [id])
+}
+
+enum AccountType {
+  ADMIN
+  STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum Location {
+  HCM
+  HN
+  DN
+}
+
+enum UserStatus {
+  CREATED
+  ACTIVE
+  DISABLED
+}
+
+enum AssetState {
+  AVAILABLE
+  UNAVAILABLE
+  ASSIGNED
+  WAITING_FOR_RECYCLING
+  RECYCLED
+}
+
+enum AssignmentState {
+  WAITING_FOR_ACCEPTANCE
+  ACCEPTED
+  IS_REQUESTED
+}
+
+enum RequestState {
+  WAITING_FOR_RETURNING
+  COMPLETED
+}
