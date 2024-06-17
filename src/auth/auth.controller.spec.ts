@@ -87,7 +87,7 @@ describe('AuthController', () => {
       });
 
       const result = await controller.changePassword(
-        { user: { staffCode: mockUserId } },
+        mockUserId,
         changePasswordDto,
       );
 
@@ -109,10 +109,7 @@ describe('AuthController', () => {
         );
 
       await expect(
-        controller.changePassword(
-          { user: { staffCode: mockUserId } },
-          changePasswordDto,
-        ),
+        controller.changePassword(mockUserId, changePasswordDto),
       ).rejects.toThrow(UnauthorizedException);
     });
   });
