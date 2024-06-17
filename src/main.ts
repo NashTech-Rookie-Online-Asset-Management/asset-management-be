@@ -8,9 +8,9 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.useGlobalPipes(new ValidationPipe());
   app.enableCors({
-    origin: configService.get('cors_url'),
+    origin: configService.get('CORS_CLIENT_URL'),
     credentials: true,
   });
-  await app.listen(configService.get('port'));
+  await app.listen(configService.get('PORT'));
 }
 bootstrap();

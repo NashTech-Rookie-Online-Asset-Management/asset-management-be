@@ -6,5 +6,6 @@ export class AuthPayloadDto {
   username: string;
 
   @IsNotEmpty({ message: 'password is required' })
+  @IsString()
   password: string;
 }

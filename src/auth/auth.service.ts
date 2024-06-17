@@ -1,19 +1,23 @@
 import { PrismaService } from './../prisma/prisma.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { AuthPayloadDto } from './dto/auth-payload.dto';
 import { PayloadType } from './types';
-import { LoginResponseDto } from './dto/login-response.dto';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { UserStatus } from '@prisma/client';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { Account, UserStatus } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
+import {
+  AuthPayloadDto,
+  ChangePasswordDto,
+  LoginResponseDto,
+  RefreshTokenDto,
+} from './dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(authPayload: AuthPayloadDto) {
@@ -21,7 +25,7 @@ export class AuthService {
       { username: authPayload.username },
       'Username or password is incorrect. Please try again',
     );
-    if (user.status === 'DISABLED') {
+    if (user.status === UserStatus.DISABLED) {
       throw new UnauthorizedException('This account is disabled.');
     }
     const passwordValid = await bcrypt.compare(
@@ -46,12 +50,12 @@ export class AuthService {
       'User not found',
     );
 
-    const passwordValid = await bcrypt.compare(
+    const isPasswordValid = await bcrypt.compare(
       changePasswordDto.oldPassword,
       user.password,
     );
 
-    if (!passwordValid) {
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Old password is incorrect');
     }
 
@@ -101,7 +105,9 @@ export class AuthService {
     return user;
   }
 
-  private async generateLoginResponse(user): Promise<LoginResponseDto> {
+  private async generateLoginResponse(
+    user: Account,
+  ): Promise<LoginResponseDto> {
     const payload: PayloadType = {
       username: user.username,
       sub: user.id,
@@ -112,10 +118,10 @@ export class AuthService {
 
     return {
       accessToken: await this.jwtService.signAsync(payload, {
-        expiresIn: '1h',
+        expiresIn: this.configService.get('EXPIRED_DURATION.ACCESS_TOKEN'),
       }),
       refreshToken: await this.jwtService.signAsync(payload, {
-        expiresIn: '1d',
+        expiresIn: this.configService.get('EXPIRED_DURATION.REFRESH_TOKEN'),
       }),
     };
   }

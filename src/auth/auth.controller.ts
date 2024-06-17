@@ -1,3 +1,4 @@
+import { GetUser } from './../common/decorators/get-user.decorator';
 import { JwtAuthGuard } from './../common/guards/jwt-auth.guard';
 import {
   Body,
@@ -9,9 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthPayloadDto } from './dto/auth-payload.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { AuthPayloadDto, ChangePasswordDto, RefreshTokenDto } from './dto';
 
 @Controller('api/auth')
 export class AuthController {
@@ -29,17 +28,17 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('change-password')
-  async changePassword(
-    @Req() req,
+  changePassword(
+    @GetUser('staffCode') staffCode: string,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    const userId = req.user.staffCode;
+    const userId = staffCode;
 
     return this.authService.changePassword(userId, changePasswordDto);
   }
 
   @Post('refresh')
-  async refresh(@Body() refreshDto: RefreshTokenDto) {
-    return await this.authService.refresh(refreshDto);
+  refresh(@Body() refreshDto: RefreshTokenDto) {
+    return this.authService.refresh(refreshDto);
   }
 }
