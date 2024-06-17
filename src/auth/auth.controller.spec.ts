@@ -4,8 +4,12 @@ import { AuthService } from './auth.service';
 import { AuthPayloadDto } from './dto/auth-payload.dto';
 import { UnauthorizedException } from '@nestjs/common';
 import { LoginResponseDto } from './dto/login-response.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 const mockAuthService = {
   login: jest.fn(),
+  changePassword: jest.fn(),
+  refresh: jest.fn(),
 };
 describe('AuthController', () => {
   let controller: AuthController;
@@ -62,6 +66,84 @@ describe('AuthController', () => {
         );
 
       await expect(controller.login(authPayload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('changePassword', () => {
+    it('should change password successfully on valid old password', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        oldPassword: 'oldpassword',
+        newPassword: 'newpassword',
+      };
+
+      const mockUserId = 'user123';
+
+      const successMessage = 'Your password has been changed successfully';
+
+      jest.spyOn(authService, 'changePassword').mockResolvedValue({
+        message: successMessage,
+      });
+
+      const result = await controller.changePassword(
+        mockUserId,
+        changePasswordDto,
+      );
+
+      expect(result).toEqual({ message: successMessage });
+    });
+
+    it('should throw UnauthorizedException on invalid old password', async () => {
+      const changePasswordDto: ChangePasswordDto = {
+        oldPassword: 'invalidoldpassword',
+        newPassword: 'newpassword',
+      };
+
+      const mockUserId = 'user123';
+
+      jest
+        .spyOn(authService, 'changePassword')
+        .mockRejectedValue(
+          new UnauthorizedException('Old password is incorrect'),
+        );
+
+      await expect(
+        controller.changePassword(mockUserId, changePasswordDto),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+  });
+
+  describe('refresh', () => {
+    it('should return new tokens on valid refresh token', async () => {
+      const refreshTokenDto: RefreshTokenDto = {
+        refreshToken: 'valid_refresh_token',
+      };
+
+      const mockedLoginResponse: LoginResponseDto = {
+        accessToken: 'mocked.accessToken',
+        refreshToken: 'mocked.refreshToken',
+      };
+
+      jest.spyOn(authService, 'refresh').mockResolvedValue(mockedLoginResponse);
+
+      const result = await controller.refresh(refreshTokenDto);
+
+      expect(result).toEqual(mockedLoginResponse);
+    });
+
+    it('should throw UnauthorizedException on invalid or expired refresh token', async () => {
+      const refreshTokenDto: RefreshTokenDto = {
+        refreshToken: 'invalid_refresh_token',
+      };
+
+      jest
+        .spyOn(authService, 'refresh')
+        .mockRejectedValue(
+          new UnauthorizedException('Invalid or expired refresh token'),
+        );
+
+      await expect(controller.refresh(refreshTokenDto)).rejects.toThrow(
         UnauthorizedException,
       );
     });
