@@ -1,5 +1,9 @@
 import { PrismaService } from './../prisma/prisma.service';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PayloadType } from './types';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -57,6 +61,12 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Old password is incorrect');
+    }
+
+    if (changePasswordDto.oldPassword === changePasswordDto.newPassword) {
+      throw new BadRequestException(
+        'Old password and new Password are the same',
+      );
     }
 
     const newPasswordHash = await bcrypt.hash(
