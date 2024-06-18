@@ -124,6 +124,7 @@ export class AuthService {
       staffCode: user.staffCode,
       status: user.status,
       type: user.type,
+      location: user.location,
     };
 
     return {
