@@ -133,6 +133,7 @@ export class AuthService {
       refreshToken: await this.jwtService.signAsync(payload, {
         expiresIn: this.configService.get('EXPIRED_DURATION.REFRESH_TOKEN'),
       }),
+      payload,
     };
   }
 }

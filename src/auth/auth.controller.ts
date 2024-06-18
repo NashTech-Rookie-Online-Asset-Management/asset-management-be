@@ -7,10 +7,12 @@ import {
   Patch,
   Post,
   Req,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthPayloadDto, ChangePasswordDto, RefreshTokenDto } from './dto';
+import { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 
 @Controller('auth')
@@ -24,8 +26,15 @@ export class AuthController {
     return req.user;
   }
   @Post('login')
-  login(@Body() authPayload: AuthPayloadDto) {
-    return this.authService.login(authPayload);
+  async login(
+    @Body() authPayload: AuthPayloadDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const auth = await this.authService.login(authPayload);
+    res.cookie('user', auth.payload);
+    res.cookie('accessToken', auth.accessToken, { httpOnly: true });
+
+    return { accessToken: auth?.accessToken, refreshToken: auth?.refreshToken };
   }
 
   @UseGuards(JwtAuthGuard)
@@ -40,7 +49,19 @@ export class AuthController {
   }
 
   @Post('refresh')
-  refresh(@Body() refreshDto: RefreshTokenDto) {
-    return this.authService.refresh(refreshDto);
+  async refresh(@Body() refreshDto: RefreshTokenDto) {
+    const refresh = await this.authService.refresh(refreshDto);
+    return {
+      accessToken: refresh?.accessToken,
+      refreshToken: refresh?.refreshToken,
+    };
+  }
+
+  @Post('logout')
+  logout(@Res() res: Response) {
+    res.clearCookie('accessToken');
+    res.clearCookie('user');
+
+    return res.json({ message: 'Logout successful' });
   }
 }
