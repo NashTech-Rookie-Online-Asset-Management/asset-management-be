@@ -80,3 +80,5 @@ tmp/
 temp/
 
 dist
+
+pnpm-lock.yaml
