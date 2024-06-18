@@ -12,7 +12,7 @@ import {
 import { AuthService } from './auth.service';
 import { AuthPayloadDto, ChangePasswordDto, RefreshTokenDto } from './dto';
 
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

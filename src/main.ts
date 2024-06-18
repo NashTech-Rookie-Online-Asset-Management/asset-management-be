@@ -11,6 +11,7 @@ async function bootstrap() {
     origin: configService.get('CORS_CLIENT_URL'),
     credentials: true,
   });
+  app.setGlobalPrefix('api');
   await app.listen(configService.get('PORT'));
 }
 bootstrap();
