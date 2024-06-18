@@ -8,6 +8,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Response } from 'express';
 import { Location } from '@prisma/client';
+import { Cookies } from 'src/common/constants';
 const mockAuthService = {
   login: jest.fn(),
   changePassword: jest.fn(),
@@ -203,8 +204,10 @@ describe('AuthController', () => {
     it('should clear cookies and return successful logout message', async () => {
       await controller.logout(mockResponse as Response);
 
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('accessToken');
-      expect(mockResponse.clearCookie).toHaveBeenCalledWith('user');
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(
+        Cookies.ACCESS_TOKEN,
+      );
+      expect(mockResponse.clearCookie).toHaveBeenCalledWith(Cookies.USER);
 
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Logout successful',

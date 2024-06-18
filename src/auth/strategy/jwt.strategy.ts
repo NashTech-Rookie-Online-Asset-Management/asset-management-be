@@ -5,6 +5,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Request } from 'express';
 import { PayloadType } from '../types';
+import { Cookies } from 'src/common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -16,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: (req: Request) => {
         let token = null;
         if (req && req.cookies) {
-          token = req.cookies['accessToken'];
+          token = req.cookies[Cookies.ACCESS_TOKEN];
         }
         return token || ExtractJwt.fromAuthHeaderAsBearerToken()(req);
       },

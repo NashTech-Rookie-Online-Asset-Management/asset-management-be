@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import { AuthPayloadDto, ChangePasswordDto, RefreshTokenDto } from './dto';
 import { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
+import { Cookies } from 'src/common/constants';
 
 @Controller('auth')
 @ApiTags('AUTH')
@@ -31,8 +32,15 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const auth = await this.authService.login(authPayload);
-    res.cookie('user', auth.payload);
-    res.cookie('accessToken', auth.accessToken, { httpOnly: true });
+    const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
+    res.cookie(Cookies.USER, auth.payload, {
+      httpOnly: true,
+      expires: oneHourFromNow,
+    });
+    res.cookie(Cookies.ACCESS_TOKEN, auth.accessToken, {
+      httpOnly: true,
+      expires: oneHourFromNow,
+    });
 
     return { accessToken: auth?.accessToken, refreshToken: auth?.refreshToken };
   }
@@ -59,8 +67,8 @@ export class AuthController {
 
   @Post('logout')
   logout(@Res() res: Response) {
-    res.clearCookie('accessToken');
-    res.clearCookie('user');
+    res.clearCookie(Cookies.ACCESS_TOKEN);
+    res.clearCookie(Cookies.USER);
 
     return res.json({ message: 'Logout successful' });
   }
