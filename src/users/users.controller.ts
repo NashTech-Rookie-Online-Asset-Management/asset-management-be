@@ -5,8 +5,10 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { RolesGuard } from '../common/guards/role.guard';
 import { Roles } from '../common/decorators';
 import { AccountType } from '@prisma/client';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('users')
+@ApiTags('USERS')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

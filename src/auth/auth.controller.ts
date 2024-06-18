@@ -11,8 +11,10 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthPayloadDto, ChangePasswordDto, RefreshTokenDto } from './dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('auth')
+@ApiTags('AUTH')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
