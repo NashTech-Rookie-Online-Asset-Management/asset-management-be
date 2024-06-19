@@ -1,2 +1,2 @@
 npx prisma db push
-npm run start:prod
+node dist/src/main

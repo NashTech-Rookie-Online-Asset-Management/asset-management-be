@@ -1,0 +1,7 @@
+volume
+dist
+node_modules
+.env
+pnpm-lock.yaml
+Dockerfile
+docker-compose.yml
