@@ -12,6 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   AuthPayloadDto,
   ChangePasswordDto,
+  ChangePasswordFirstTimeDto,
   LoginResponseDto,
   RefreshTokenDto,
 } from './dto';
@@ -45,6 +46,22 @@ export class AuthService {
     return this.generateLoginResponse(user);
   }
 
+  async changePasswordFirstTime(
+    userStaffCode: string,
+    changePasswordFirstTimeDto: ChangePasswordFirstTimeDto,
+  ) {
+    await this.findUser({ staffCode: userStaffCode }, 'User not found');
+
+    const newPasswordHash = await bcrypt.hash(
+      changePasswordFirstTimeDto.newPassword,
+      10,
+    );
+    await this.prismaService.account.update({
+      where: { staffCode: userStaffCode },
+      data: { password: newPasswordHash, status: UserStatus.ACTIVE },
+    });
+    return { message: 'Your password has been changed successfully' };
+  }
   async changePassword(
     userStaffCode: string,
     changePasswordDto: ChangePasswordDto,

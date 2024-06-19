@@ -11,7 +11,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthPayloadDto, ChangePasswordDto, RefreshTokenDto } from './dto';
+import {
+  AuthPayloadDto,
+  ChangePasswordDto,
+  ChangePasswordFirstTimeDto,
+  RefreshTokenDto,
+} from './dto';
 import { Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/common/constants';
@@ -51,9 +56,23 @@ export class AuthController {
     @GetUser('staffCode') staffCode: string,
     @Body() changePasswordDto: ChangePasswordDto,
   ) {
-    const userId = staffCode;
+    const userStaffCode = staffCode;
 
-    return this.authService.changePassword(userId, changePasswordDto);
+    return this.authService.changePassword(userStaffCode, changePasswordDto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('change-password-first-time')
+  changePasswordFirstTime(
+    @GetUser('staffCode') staffCode: string,
+    @Body() changePasswordFirstTimeDto: ChangePasswordFirstTimeDto,
+  ) {
+    const userStaffCode = staffCode;
+
+    return this.authService.changePasswordFirstTime(
+      userStaffCode,
+      changePasswordFirstTimeDto,
+    );
   }
 
   @Post('refresh')
