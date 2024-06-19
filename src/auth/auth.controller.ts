@@ -17,9 +17,20 @@ import {
   ChangePasswordFirstTimeDto,
   RefreshTokenDto,
 } from './dto';
-import { Response } from 'express';
+import { CookieOptions, Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { Cookies } from 'src/common/constants';
+
+const cookieOptions: CookieOptions =
+  process.env.NODE_ENV === 'production'
+    ? {
+        httpOnly: true,
+        sameSite: 'none',
+        secure: true,
+      }
+    : {
+        httpOnly: true,
+      };
 
 @Controller('auth')
 @ApiTags('AUTH')
@@ -39,12 +50,12 @@ export class AuthController {
     const auth = await this.authService.login(authPayload);
     const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
     res.cookie(Cookies.USER, auth.payload, {
-      httpOnly: true,
       expires: oneHourFromNow,
+      ...cookieOptions,
     });
     res.cookie(Cookies.ACCESS_TOKEN, auth.accessToken, {
-      httpOnly: true,
       expires: oneHourFromNow,
+      ...cookieOptions,
     });
 
     return { accessToken: auth?.accessToken, refreshToken: auth?.refreshToken };
@@ -75,12 +86,12 @@ export class AuthController {
     );
     const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
     res.cookie(Cookies.USER, userUpdated.payload, {
-      httpOnly: true,
       expires: oneHourFromNow,
+      ...cookieOptions,
     });
     res.cookie(Cookies.ACCESS_TOKEN, userUpdated.accessToken, {
-      httpOnly: true,
       expires: oneHourFromNow,
+      ...cookieOptions,
     });
     return res.json({ message: 'Your password has been changed successfully' });
   }
