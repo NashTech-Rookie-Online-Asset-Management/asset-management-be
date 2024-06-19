@@ -12,8 +12,10 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AssetService } from './asset.service';
 import { AssetPageOptions } from './dto';
+import { ApiTags } from '@nestjs/swagger';
 
 @Controller('assets')
+@ApiTags('ASSETS')
 export class AssetController {
   constructor(private readonly assetService: AssetService) {}
 

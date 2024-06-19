@@ -29,6 +29,10 @@ async function bootstrap() {
     .setTitle('Asset Management APIs')
     .setDescription('This document is only available in development mode')
     .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'access-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, documentConfig);
   SwaggerModule.setup('docs', app, document);

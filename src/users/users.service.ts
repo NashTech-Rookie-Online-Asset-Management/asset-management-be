@@ -1,7 +1,8 @@
-import { PrismaService } from './../prisma/prisma.service';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateUserDto } from './dto';
 import * as bcrypt from 'bcryptjs';
+import { Account, Location } from '@prisma/client';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { PrismaService } from './../prisma/prisma.service';
+import { CreateUserDto, UserPageOptions } from './dto';
 import { formatFirstName, formatDate } from '../common/utils';
 @Injectable()
 export class UsersService {
@@ -96,8 +97,113 @@ export class UsersService {
 
     return similarUsernames.map((user) => user.username);
   }
+
   private generatePassword(username: string, dob: Date): string {
     const formattedDOB = formatDate(dob);
     return `${username}@${formattedDOB}`;
+  }
+
+  async selectMany(username: string, location: Location, dto: UserPageOptions) {
+    const conditions = {
+      where: {
+        location: location,
+        username: {
+          not: username,
+        },
+        ...(dto.search &&
+          dto.search.length > 0 && {
+            OR: [
+              {
+                firstName: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                lastName: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                staffCode: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+            ],
+          }),
+        ...(dto.types &&
+          dto.types.length > 0 && {
+            type: {
+              in: dto.types,
+            },
+          }),
+      },
+      orderBy: [
+        {
+          staffCode: dto.staffCodeOrder,
+        },
+        {
+          firstName: dto.nameOrder,
+        },
+        {
+          joinedAt: dto.joinedDateOrder,
+        },
+        {
+          type: dto.typeOrder,
+        },
+      ],
+    };
+
+    const pageOptions = {
+      take: dto.take,
+      skip: dto.skip,
+    };
+
+    const [users, totalCount] = await Promise.all([
+      this.prismaService.account.findMany({
+        ...conditions,
+        ...pageOptions,
+
+        select: {
+          id: true,
+          staffCode: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          joinedAt: true,
+          type: true,
+        },
+      }),
+      this.prismaService.account.count({
+        ...conditions,
+      }),
+    ]);
+
+    return {
+      data: users,
+      pagination: {
+        totalPages: Math.ceil(totalCount / dto.take),
+        totalCount,
+      },
+    };
+  }
+
+  async selectOne(username: string): Promise<Partial<Account>> {
+    return this.prismaService.account.findFirst({
+      where: { username },
+      select: {
+        staffCode: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        dob: true,
+        gender: true,
+        joinedAt: true,
+        type: true,
+        location: true,
+      },
+    });
   }
 }
