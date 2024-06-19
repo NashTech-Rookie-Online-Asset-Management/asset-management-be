@@ -1,5 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Location } from '@prisma/client';
+import { ERROR_MESSAGES } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AssetPageOptions } from './dto';
 
@@ -8,21 +14,25 @@ export class AssetService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getAssets(location: Location, dto: AssetPageOptions) {
-    const categoryIds = dto.categoryIds || [];
+    if (!Object.values(Location).includes(location)) {
+      throw new BadRequestException(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+    }
 
-    const categories = await this.prismaService.category.findMany({
-      where: {
-        id: {
-          in: categoryIds,
+    if (dto.categoryIds && dto.categoryIds.length > 0) {
+      const categories = await this.prismaService.category.findMany({
+        where: {
+          id: {
+            in: dto.categoryIds,
+          },
         },
-      },
-      select: {
-        id: true,
-      },
-    });
+        select: {
+          id: true,
+        },
+      });
 
-    if (categories.length !== categoryIds.length) {
-      throw new BadRequestException('Some categories do not exist');
+      if (categories.length !== dto.categoryIds.length) {
+        throw new BadRequestException(ERROR_MESSAGES.ASSET_CATEGORY_NOT_FOUND);
+      }
     }
 
     const conditions = {
@@ -110,5 +120,66 @@ export class AssetService {
         totalCount,
       },
     };
+  }
+
+  async getAsset(location: Location, id: number) {
+    if (!Object.values(Location).includes(location)) {
+      throw new BadRequestException(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+    }
+
+    const asset = await this.prismaService.asset.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+        assetCode: true,
+        name: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        installedDate: true,
+        state: true,
+        location: true,
+        specification: true,
+        assignments: {
+          select: {
+            id: true,
+            assignedDate: true,
+            assignedTo: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+            assignedBy: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+            returningRequest: {
+              select: {
+                id: true,
+                returnedDate: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!asset) {
+      throw new NotFoundException(ERROR_MESSAGES.ASSET_NOT_FOUND);
+    }
+
+    if (asset.location !== location) {
+      throw new ForbiddenException(ERROR_MESSAGES.ASSET_ACCESS_DENIED);
+    }
+
+    return asset;
   }
 }
