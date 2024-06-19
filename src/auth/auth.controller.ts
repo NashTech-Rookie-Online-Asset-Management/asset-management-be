@@ -63,16 +63,26 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Patch('change-password-first-time')
-  changePasswordFirstTime(
+  async changePasswordFirstTime(
     @GetUser('staffCode') staffCode: string,
     @Body() changePasswordFirstTimeDto: ChangePasswordFirstTimeDto,
+    @Res() res: Response,
   ) {
     const userStaffCode = staffCode;
-
-    return this.authService.changePasswordFirstTime(
+    const userUpdated = await this.authService.changePasswordFirstTime(
       userStaffCode,
       changePasswordFirstTimeDto,
     );
+    const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
+    res.cookie(Cookies.USER, userUpdated.payload, {
+      httpOnly: true,
+      expires: oneHourFromNow,
+    });
+    res.cookie(Cookies.ACCESS_TOKEN, userUpdated.accessToken, {
+      httpOnly: true,
+      expires: oneHourFromNow,
+    });
+    return res.json({ message: 'Your password has been changed successfully' });
   }
 
   @Post('refresh')

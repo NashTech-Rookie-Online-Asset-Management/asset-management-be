@@ -1,14 +1,13 @@
-import { PrismaService } from './../prisma/prisma.service';
 import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { PayloadType } from './types';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { Account, UserStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
+import { Account, UserStatus } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import { PrismaService } from './../prisma/prisma.service';
 import {
   AuthPayloadDto,
   ChangePasswordDto,
@@ -16,6 +15,7 @@ import {
   LoginResponseDto,
   RefreshTokenDto,
 } from './dto';
+import { PayloadType } from './types';
 
 @Injectable()
 export class AuthService {
@@ -56,11 +56,12 @@ export class AuthService {
       changePasswordFirstTimeDto.newPassword,
       10,
     );
-    await this.prismaService.account.update({
+    const userUpdated = await this.prismaService.account.update({
       where: { staffCode: userStaffCode },
       data: { password: newPasswordHash, status: UserStatus.ACTIVE },
     });
-    return { message: 'Your password has been changed successfully' };
+
+    return this.generateLoginResponse(userUpdated);
   }
   async changePassword(
     userStaffCode: string,
