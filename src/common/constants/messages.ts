@@ -8,7 +8,7 @@ export const Messages = {
     FAILED: {
       LOGIN: 'Username or password is incorrect. Please try again',
       PASSWORD_NOT_CORRECT: 'Password is incorrect',
-      PASSWORD_NOT_SAME: 'Old password and new Password are not the same',
+      PASSWORD_NOT_SAME: 'Old password and new password should not be the same',
     },
     VALIDATE: {
       USER_NAME: 'Username is required',
