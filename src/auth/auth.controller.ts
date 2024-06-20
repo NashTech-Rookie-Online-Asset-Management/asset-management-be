@@ -19,7 +19,7 @@ import {
 } from './dto';
 import { CookieOptions, Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
-import { Cookies } from 'src/common/constants';
+import { Cookies, Messages } from 'src/common/constants';
 
 const cookieOptions: CookieOptions =
   process.env.NODE_ENV === 'production'
@@ -93,7 +93,7 @@ export class AuthController {
       expires: oneHourFromNow,
       ...cookieOptions,
     });
-    return res.json({ message: 'Your password has been changed successfully' });
+    return res.json({ message: Messages.AUTH.SUCCESS.CHANGE_PASSWORD });
   }
 
   @Post('refresh')
@@ -110,6 +110,6 @@ export class AuthController {
     res.clearCookie(Cookies.ACCESS_TOKEN);
     res.clearCookie(Cookies.USER);
 
-    return res.json({ message: 'Logout successful' });
+    return res.json({ message: Messages.AUTH.SUCCESS.LOGOUT });
   }
 }

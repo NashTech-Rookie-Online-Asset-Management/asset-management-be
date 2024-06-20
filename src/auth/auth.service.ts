@@ -15,7 +15,7 @@ import {
   LoginResponseDto,
   RefreshTokenDto,
 } from './dto';
-import { PayloadType } from './types';
+import { Messages } from 'src/common/constants';
 
 @Injectable()
 export class AuthService {
@@ -28,10 +28,10 @@ export class AuthService {
   async login(authPayload: AuthPayloadDto) {
     const user = await this.findUser(
       { username: authPayload.username },
-      'Username or password is incorrect. Please try again',
+      Messages.AUTH.FAILED.LOGIN,
     );
     if (user.status === UserStatus.DISABLED) {
-      throw new UnauthorizedException('This account is disabled.');
+      throw new UnauthorizedException(Messages.USER.FAILED.DISABLED);
     }
     const passwordValid = await bcrypt.compare(
       authPayload.password,
@@ -39,9 +39,7 @@ export class AuthService {
     );
 
     if (!passwordValid) {
-      throw new UnauthorizedException(
-        'Username or password is incorrect. Please try again.',
-      );
+      throw new UnauthorizedException(Messages.AUTH.FAILED.LOGIN);
     }
     return this.generateLoginResponse(user);
   }
@@ -50,7 +48,18 @@ export class AuthService {
     userStaffCode: string,
     changePasswordFirstTimeDto: ChangePasswordFirstTimeDto,
   ) {
-    await this.findUser({ staffCode: userStaffCode }, 'User not found');
+    const user = await this.findUser(
+      { staffCode: userStaffCode },
+      Messages.USER.FAILED.NOT_FOUND,
+    );
+
+    const isSamePassword = await bcrypt.compare(
+      changePasswordFirstTimeDto.newPassword,
+      user.password,
+    );
+    if (isSamePassword) {
+      throw new BadRequestException(Messages.AUTH.FAILED.PASSWORD_NOT_SAME);
+    }
 
     const newPasswordHash = await bcrypt.hash(
       changePasswordFirstTimeDto.newPassword,
@@ -69,7 +78,7 @@ export class AuthService {
   ) {
     const user = await this.findUser(
       { staffCode: userStaffCode },
-      'User not found',
+      Messages.USER.FAILED.NOT_FOUND,
     );
 
     const isPasswordValid = await bcrypt.compare(
@@ -78,13 +87,13 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Old password is incorrect');
+      throw new UnauthorizedException(
+        Messages.AUTH.FAILED.PASSWORD_NOT_CORRECT,
+      );
     }
 
     if (changePasswordDto.oldPassword === changePasswordDto.newPassword) {
-      throw new BadRequestException(
-        'Old password and new Password are the same',
-      );
+      throw new BadRequestException(Messages.AUTH.FAILED.PASSWORD_NOT_SAME);
     }
 
     const newPasswordHash = await bcrypt.hash(
@@ -95,14 +104,14 @@ export class AuthService {
       where: { staffCode: userStaffCode },
       data: { password: newPasswordHash, status: UserStatus.ACTIVE },
     });
-    return { message: 'Your password has been changed successfully' };
+    return { message: Messages.AUTH.SUCCESS.CHANGE_PASSWORD };
   }
 
   async refresh(refreshTokenDto: RefreshTokenDto) {
     const { refreshToken } = refreshTokenDto;
 
     if (!refreshToken) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException(Messages.TOKEN.FAILED.REFRESH_INVALID);
     }
 
     try {
@@ -111,12 +120,12 @@ export class AuthService {
       });
       const user = await this.findUser(
         { staffCode: decodeToken.staffCode },
-        'User not found',
+        Messages.USER.FAILED.NOT_FOUND,
       );
 
       return this.generateLoginResponse(user);
     } catch (error) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException(Messages.TOKEN.FAILED.REFRESH_EXPIRED);
     }
   }
 
@@ -136,7 +145,7 @@ export class AuthService {
   private async generateLoginResponse(
     user: Account,
   ): Promise<LoginResponseDto> {
-    const payload: PayloadType = {
+    const payload = {
       username: user.username,
       sub: user.id,
       staffCode: user.staffCode,

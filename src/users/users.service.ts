@@ -1,9 +1,19 @@
 import * as bcrypt from 'bcryptjs';
 import { Account, Location } from '@prisma/client';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from './../prisma/prisma.service';
-import { CreateUserDto, UserPageOptions } from './dto';
-import { formatFirstName, formatDate } from '../common/utils';
+import { CreateUserDto, UpdateUserDto, UserPageOptions } from './dto';
+import {
+  formatFirstName,
+  formatDate,
+  isOlderThan18,
+  isAtLeast18YearsAfter,
+} from '../common/utils';
+import { Messages } from 'src/common/constants';
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -39,6 +49,8 @@ export class UsersService {
         select: {
           staffCode: true,
           firstName: true,
+          dob: true,
+          gender: true,
           lastName: true,
           username: true,
           joinedAt: true,
@@ -46,7 +58,59 @@ export class UsersService {
         },
       });
     } catch (error) {
-      throw new BadRequestException('Failed to create user.');
+      throw new BadRequestException(Messages.USER.FAILED.CREATE);
+    }
+  }
+
+  async update(userStaffCode: string, updateUserDto: UpdateUserDto) {
+    try {
+      const userExisted = await this.findUser(
+        { staffCode: userStaffCode },
+        Messages.USER.FAILED.NOT_FOUND,
+      );
+      const { dob, gender, joinedAt, type } = updateUserDto;
+      if (dob) {
+        const newDate = new Date(dob);
+        if (!isOlderThan18(newDate)) {
+          throw new BadRequestException(Messages.USER.FAILED.UNDER_AGE);
+        }
+        userExisted.dob = newDate;
+      }
+      if (joinedAt) {
+        const newJoinedAt = new Date(joinedAt);
+        const dobToCheck = dob ? new Date(dob) : userExisted.dob;
+        this.validateJoinedDate(dobToCheck, newJoinedAt);
+        userExisted.joinedAt = newJoinedAt;
+      }
+      if (gender) {
+        userExisted.gender = gender;
+      }
+
+      if (type) {
+        userExisted.type = type;
+      }
+      const userUpdated = await this.prismaService.account.update({
+        where: { staffCode: userStaffCode },
+        data: {
+          dob: userExisted.dob,
+          gender: userExisted.gender,
+          joinedAt: userExisted.joinedAt,
+          type: userExisted.type,
+        },
+        select: {
+          staffCode: true,
+          firstName: true,
+          dob: true,
+          gender: true,
+          lastName: true,
+          username: true,
+          joinedAt: true,
+          type: true,
+        },
+      });
+      return userUpdated;
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
   }
 
@@ -78,6 +142,20 @@ export class UsersService {
     return uniqueUsername;
   }
 
+  private validateJoinedDate(dob: Date, joinedAt: Date) {
+    if (!isAtLeast18YearsAfter(dob, joinedAt)) {
+      throw new BadRequestException(Messages.USER.FAILED.JOINED_DATE_UNDER_AGE);
+    }
+
+    if (joinedAt <= dob) {
+      throw new BadRequestException(Messages.USER.FAILED.JOINED_AFTER_DOB);
+    }
+    const dayOfWeek = joinedAt.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      throw new BadRequestException(Messages.USER.FAILED.JOINED_WEEKEND);
+    }
+  }
+
   private async fetchConflictingUsernames(
     baseUsername: string,
   ): Promise<string[]> {
@@ -98,6 +176,18 @@ export class UsersService {
     return similarUsernames.map((user) => user.username);
   }
 
+  private async findUser(
+    where: { username: string } | { staffCode: string },
+    message: string,
+  ) {
+    const user = await this.prismaService.account.findUnique({ where });
+
+    if (!user) {
+      throw new UnauthorizedException(message);
+    }
+
+    return user;
+  }
   private generatePassword(username: string, dob: Date): string {
     const formattedDOB = formatDate(dob);
     return `${username}@${formattedDOB}`;

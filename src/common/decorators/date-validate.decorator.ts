@@ -3,6 +3,8 @@ import {
   ValidationOptions,
   ValidationArguments,
 } from 'class-validator';
+import { isAtLeast18YearsAfter, isOlderThan18 } from '../utils';
+import { Messages } from '../constants';
 
 export function IsOlderThan18(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -13,16 +15,11 @@ export function IsOlderThan18(validationOptions?: ValidationOptions) {
       options: validationOptions,
       validator: {
         validate(value: any) {
-          const today = new Date();
           const dob = new Date(value);
-          const age = today.getFullYear() - dob.getFullYear();
-          const m = today.getMonth() - dob.getMonth();
-          return m < 0 || (m === 0 && today.getDate() < dob.getDate())
-            ? age - 1 >= 18
-            : age >= 18;
+          return isOlderThan18(dob);
         },
         defaultMessage() {
-          return 'User is under 18. Please select a different date';
+          return Messages.USER.FAILED.UNDER_AGE;
         },
       },
     });
@@ -41,6 +38,11 @@ export function IsValidJoinedDate(validationOptions?: ValidationOptions) {
         validate(value: any, args: ValidationArguments) {
           const joinedAt = new Date(value);
           const dob = new Date((args.object as any)[args.constraints[0]]);
+
+          if (!isAtLeast18YearsAfter(dob, joinedAt)) {
+            return false;
+          }
+
           // Check if joinedAt is later than dob
           if (joinedAt <= dob) {
             return false;
@@ -57,16 +59,21 @@ export function IsValidJoinedDate(validationOptions?: ValidationOptions) {
         defaultMessage(args: ValidationArguments) {
           const joinedAt = new Date(args.value);
           const dob = new Date((args.object as any)[args.constraints[0]]);
+
           if (joinedAt <= dob) {
-            return 'Joined date is not later than Date of Birth. Please select a different date';
+            return Messages.USER.FAILED.JOINED_AFTER_DOB;
+          }
+
+          if (!isAtLeast18YearsAfter(dob, joinedAt)) {
+            return Messages.USER.FAILED.JOINED_DATE_UNDER_AGE;
           }
 
           const day = joinedAt.getDay();
           if (day === 0 || day === 6) {
-            return 'Joined date is Saturday or Sunday. Please select a different date';
+            return Messages.USER.FAILED.JOINED_WEEKEND;
           }
 
-          return 'Invalid joined date';
+          return Messages.USER.FAILED.JOINED_DATE_INVALID;
         },
       },
     });

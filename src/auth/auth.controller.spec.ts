@@ -7,7 +7,6 @@ import { LoginResponseDto } from './dto/login-response.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { Response } from 'express';
-import { Location } from '@prisma/client';
 import { Cookies } from 'src/common/constants';
 const mockAuthService = {
   login: jest.fn(),
@@ -51,11 +50,7 @@ describe('AuthController', () => {
         refreshToken: 'mocked.refreshToken',
         payload: {
           username: 'abc',
-          staffCode: 'SD0001',
-          status: 'CREATED',
           sub: 1,
-          type: 'ADMIN',
-          location: Location.HCM,
         },
       };
 
@@ -147,11 +142,7 @@ describe('AuthController', () => {
         payload: {
           // Ensure payload matches what AuthService.refresh returns
           username: 'abc',
-          staffCode: 'SD0001',
-          status: 'CREATED',
           sub: 1,
-          type: 'ADMIN',
-          location: Location.HCM,
         },
       };
 

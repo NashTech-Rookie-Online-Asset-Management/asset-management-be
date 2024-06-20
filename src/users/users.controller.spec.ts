@@ -8,6 +8,7 @@ import { AccountType, Location } from '@prisma/client';
 
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { UpdateUserDto, UserPageOptions } from './dto';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -15,6 +16,9 @@ describe('UsersController', () => {
 
   const mockUsersService = {
     create: jest.fn(),
+    update: jest.fn(),
+    selectMany: jest.fn(),
+    selectOne: jest.fn(),
   };
 
   const mockJwtAuthGuard = {
@@ -97,6 +101,143 @@ describe('UsersController', () => {
         'Failed to create user',
       );
       expect(usersService.create).toHaveBeenCalledWith(createUserDto);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a user successfully', async () => {
+      const userStaffCode = 'SD0001';
+      const updateUserDto: UpdateUserDto = {
+        dob: new Date('2000-01-01'),
+        gender: 'MALE',
+        joinedAt: new Date('2024-06-17'),
+        type: 'ADMIN',
+      };
+
+      const result = {
+        staffCode: 'SD0001',
+        firstName: 'John',
+        lastName: 'Doe',
+        username: 'johnd',
+        joinedAt: new Date('2024-06-17'),
+        type: 'ADMIN',
+      };
+
+      mockUsersService.update = jest.fn().mockResolvedValue(result);
+
+      expect(await controller.update(userStaffCode, updateUserDto)).toEqual(
+        result,
+      );
+      expect(usersService.update).toHaveBeenCalledWith(
+        userStaffCode,
+        updateUserDto,
+      );
+    });
+
+    it('should throw an error if the user update fails', async () => {
+      const userStaffCode = 'SD0001';
+      const updateUserDto: UpdateUserDto = {
+        dob: new Date('2000-01-01'),
+        gender: 'MALE',
+        joinedAt: new Date('2024-06-17'),
+        type: 'ADMIN',
+      };
+
+      mockUsersService.update = jest
+        .fn()
+        .mockRejectedValue(new Error('Failed to update user'));
+
+      await expect(
+        controller.update(userStaffCode, updateUserDto),
+      ).rejects.toThrow('Failed to update user');
+      expect(usersService.update).toHaveBeenCalledWith(
+        userStaffCode,
+        updateUserDto,
+      );
+    });
+  });
+
+  describe('getUsers', () => {
+    it('should return a list of users successfully', async () => {
+      const username = 'admin';
+      const location: Location = Location.HCM;
+      const dto: UserPageOptions = { page: 1, take: 10, skip: 1 };
+
+      const result = [
+        {
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'Doe',
+          username: 'johnd',
+          joinedAt: new Date('2024-06-17'),
+          type: 'ADMIN',
+          location: Location.HCM,
+        },
+      ];
+
+      mockUsersService.selectMany.mockResolvedValue(result);
+
+      expect(await controller.getUsers(username, location, dto)).toEqual(
+        result,
+      );
+      expect(usersService.selectMany).toHaveBeenCalledWith(
+        username,
+        location,
+        dto,
+      );
+    });
+
+    it('should throw an error if retrieving users fails', async () => {
+      const username = 'admin';
+      const location: Location = Location.HCM;
+      const dto: UserPageOptions = { page: 1, take: 10, skip: 1 };
+
+      mockUsersService.selectMany.mockRejectedValue(
+        new Error('Failed to retrieve users'),
+      );
+
+      await expect(
+        controller.getUsers(username, location, dto),
+      ).rejects.toThrow('Failed to retrieve users');
+      expect(usersService.selectMany).toHaveBeenCalledWith(
+        username,
+        location,
+        dto,
+      );
+    });
+  });
+
+  describe('getUser', () => {
+    it('should return a user successfully', async () => {
+      const username = 'johnd';
+
+      const result = {
+        staffCode: 'SD0001',
+        firstName: 'John',
+        lastName: 'Doe',
+        username: 'johnd',
+        joinedAt: new Date('2024-06-17'),
+        type: 'ADMIN',
+        location: Location.HCM,
+      };
+
+      mockUsersService.selectOne.mockResolvedValue(result);
+
+      expect(await controller.getUser(username)).toEqual(result);
+      expect(usersService.selectOne).toHaveBeenCalledWith(username);
+    });
+
+    it('should throw an error if retrieving the user fails', async () => {
+      const username = 'johnd';
+
+      mockUsersService.selectOne.mockRejectedValue(
+        new Error('Failed to retrieve user'),
+      );
+
+      await expect(controller.getUser(username)).rejects.toThrow(
+        'Failed to retrieve user',
+      );
+      expect(usersService.selectOne).toHaveBeenCalledWith(username);
     });
   });
 });

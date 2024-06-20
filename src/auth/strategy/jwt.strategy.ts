@@ -5,7 +5,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Request } from 'express';
 import { PayloadType } from '../types';
-import { Cookies } from 'src/common/constants';
+import { Cookies, Messages } from 'src/common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -34,15 +34,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException(Messages.USER.FAILED.NOT_FOUND);
     }
     return {
-      id: payload.sub,
-      staffCode: payload.staffCode,
-      username: payload.username,
-      status: payload.status,
-      type: payload.type,
-      location: payload.location,
+      id: user.id,
+      staffCode: user.staffCode,
+      username: user.username,
+      status: user.status,
+      type: user.type,
+      location: user.location,
     };
   }
 }
