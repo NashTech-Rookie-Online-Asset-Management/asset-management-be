@@ -63,7 +63,8 @@ export const Messages = {
       NOT_FOUND: 'Asset not found',
       CATEGORY_NOT_FOUND: 'Category not found',
       ACCESS_DENIED: 'You do not have access to this asset',
-      ASSET_ALREADY_EXISTS: 'Asset already exists',
+      ASSET_IS_ASSIGNED: 'Asset is assigned',
+      ASSET_STATE_INVALID: 'Invalid asset state',
     },
     VALIDATE: {
       NAME: 'Name is required',
@@ -78,6 +79,7 @@ export const Messages = {
       SPECIFICATION_INVALID: 'Invalid specification',
       LOCATION: 'Location is required',
       LOCATION_INVALID: 'Invalid location',
+      ASSET_STATE_INVALID: 'Invalid asset state',
     },
   },
   CATEGORY: {

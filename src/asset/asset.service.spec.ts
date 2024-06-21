@@ -8,8 +8,7 @@ import { AssetState, Location } from '@prisma/client';
 import { ERROR_MESSAGES, Messages, Order } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AssetService } from './asset.service';
-import { AssetPageOptions } from './dto';
-import { CreateAssetDto } from './dto/create-asset.dto';
+import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
 
 describe('AssetService', () => {
   let assetService: AssetService;
@@ -30,6 +29,7 @@ describe('AssetService', () => {
               findMany: jest.fn(),
               findUnique: jest.fn(),
               count: jest.fn(),
+              update: jest.fn(),
               create: jest.fn(),
               findFirst: jest.fn(),
             },
@@ -701,6 +701,57 @@ describe('AssetService', () => {
         'Intel Core i5, 8GB RAM, 256GB SSD',
       );
       expect(result).toHaveProperty('location', Location.HCM);
+    });
+  });
+
+  describe('updateAsset', () => {
+    const location = Location.HCM;
+    const existingAssetId = 1;
+    const nonExistingAssetId = 999;
+    const updateDtoFailed: UpdateAssetDto = {
+      name: 'Updated Asset Name',
+      state: AssetState.ASSIGNED,
+    };
+    const updateDto: UpdateAssetDto = {
+      name: 'Updated Asset Name',
+      state: AssetState.AVAILABLE,
+    };
+
+    it('should throw NotFoundException if asset does not exist', async () => {
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        assetService.update(nonExistingAssetId, updateDtoFailed),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        assetService.update(nonExistingAssetId, updateDtoFailed),
+      ).rejects.toThrow(ERROR_MESSAGES.ASSET_NOT_FOUND);
+    });
+
+    it('should update the asset successfully', async () => {
+      const assetMock = {
+        id: existingAssetId,
+        location: location,
+      };
+
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(
+        assetMock,
+      );
+      (prismaService.asset.update as jest.Mock).mockResolvedValue({
+        ...assetMock,
+        ...updateDto,
+      });
+
+      const result = await assetService.update(existingAssetId, updateDto);
+
+      expect(result).toEqual({
+        ...assetMock,
+        ...updateDto,
+      });
+      expect(prismaService.asset.update).toHaveBeenCalledWith({
+        where: { id: existingAssetId },
+        data: updateDto,
+      });
     });
   });
 });

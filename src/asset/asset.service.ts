@@ -4,10 +4,10 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Location } from '@prisma/client';
+import { AssetState, Location } from '@prisma/client';
 import { ERROR_MESSAGES, Messages } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AssetPageOptions } from './dto';
+import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
 
 @Injectable()
@@ -173,7 +173,6 @@ export class AssetService {
 
     return asset;
   }
-
   async create(location: Location, createAssetDto: CreateAssetDto) {
     if (!Object.values(Location).includes(location)) {
       throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
@@ -219,5 +218,44 @@ export class AssetService {
       },
     });
     return newAsset;
+  }
+
+  async update(id: number, dto: UpdateAssetDto) {
+    //check asset exists and is not assigned
+    const { installedDate } = dto;
+    if (installedDate) {
+      dto.installedDate = new Date(installedDate);
+    }
+    const asset = await this.prismaService.asset.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (!asset) {
+      throw new NotFoundException(Messages.ASSET.FAILED.NOT_FOUND);
+    }
+
+    if (asset.state === AssetState.ASSIGNED) {
+      throw new BadRequestException(Messages.ASSET.FAILED.ASSET_IS_ASSIGNED);
+    }
+
+    if (dto.state) {
+      if (
+        !Object.values(AssetState).includes(dto.state) ||
+        dto.state === AssetState.ASSIGNED
+      ) {
+        throw new BadRequestException(
+          Messages.ASSET.FAILED.ASSET_STATE_INVALID,
+        );
+      }
+    }
+    return await this.prismaService.asset.update({
+      where: {
+        id,
+      },
+      data: {
+        ...dto,
+      },
+    });
   }
 }

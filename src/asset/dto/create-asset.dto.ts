@@ -28,7 +28,10 @@ export class CreateAssetDto {
   @IsDateString()
   installedDate: Date;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: AssetState,
+    default: AssetState.AVAILABLE,
+  })
   @IsNotEmpty({ message: Messages.ASSET.VALIDATE.STATE })
   @IsEnum(AssetState, { message: Messages.ASSET.VALIDATE.STATE_INVALID })
   state: AssetState;

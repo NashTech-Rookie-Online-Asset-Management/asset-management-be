@@ -1,12 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AssetController } from './asset.controller';
 import { AssetService } from './asset.service';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-import { CreateAssetDto } from './dto/create-asset.dto';
-import { AssetPageOptions } from './dto';
-import { Location, AssetState } from '@prisma/client';
+import { AssetState, Location } from '@prisma/client';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { AssetPageOptions, UpdateAssetDto } from './dto';
+import { CreateAssetDto } from './dto/create-asset.dto';
 
 describe('AssetController', () => {
   let controller: AssetController;
@@ -21,6 +21,7 @@ describe('AssetController', () => {
           useValue: {
             getAssets: jest.fn(),
             getAsset: jest.fn(),
+            update: jest.fn(),
             create: jest.fn(),
           },
         },
@@ -123,6 +124,21 @@ describe('AssetController', () => {
         result,
       );
       expect(service.create).toHaveBeenCalledWith(location, createAssetDto);
+    });
+  });
+
+  describe('updateAsset', () => {
+    it('should call assetService.update with correct parameters', async () => {
+      const id = 1;
+      const dto: UpdateAssetDto = { name: 'Updated Asset' };
+      const updateResult = { id, name: 'Updated Asset' };
+
+      (service.update as jest.Mock).mockResolvedValue(updateResult);
+
+      const result = await controller.updateAsset(id, dto);
+
+      expect(service.update).toHaveBeenCalledWith(id, dto);
+      expect(result).toEqual(updateResult);
     });
   });
 });
