@@ -68,22 +68,12 @@ export class AssetService {
             },
           }),
       },
-      orderBy: [
-        {
-          assetCode: dto.assetCodeOrder,
-        },
-        {
-          name: dto.nameOrder,
-        },
-        {
-          category: {
-            name: dto.categoryOrder,
-          },
-        },
-        {
-          state: dto.stateOrder,
-        },
-      ],
+      orderBy: {
+        [dto.sortField]:
+          dto.sortField === 'category'
+            ? { name: dto.sortOrder }
+            : dto.sortOrder,
+      },
     };
 
     const pageOptions = {

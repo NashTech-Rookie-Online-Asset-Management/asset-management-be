@@ -171,10 +171,8 @@ describe('AssetService', () => {
       const dto: AssetPageOptions = {
         take: 10,
         skip: 0,
-        assetCodeOrder: Order.ASC,
-        nameOrder: Order.DESC,
-        categoryOrder: Order.ASC,
-        stateOrder: Order.DESC,
+        sortField: 'assetCode',
+        sortOrder: Order.ASC,
       };
 
       (prismaService.asset.findMany as jest.Mock).mockResolvedValue([
@@ -269,10 +267,8 @@ describe('AssetService', () => {
         take: 10,
         skip: 0,
         search: 'Laptop HP Probook 450 G1',
-        assetCodeOrder: Order.ASC,
-        nameOrder: Order.DESC,
-        categoryOrder: Order.ASC,
-        stateOrder: Order.DESC,
+        sortField: 'assetCode',
+        sortOrder: Order.ASC,
         categoryIds: [1],
       };
 
@@ -362,10 +358,8 @@ describe('AssetService', () => {
         take: 10,
         skip: 10,
         search: 'Laptop HP Probook 450 G1',
-        assetCodeOrder: Order.ASC,
-        nameOrder: Order.DESC,
-        categoryOrder: Order.ASC,
-        stateOrder: Order.DESC,
+        sortField: 'assetCode',
+        sortOrder: Order.ASC,
         categoryIds: [1],
       };
 
@@ -397,10 +391,8 @@ describe('AssetService', () => {
         take: 10,
         skip: 10,
         search: 'Laptop HP Probook 450 G1',
-        assetCodeOrder: Order.ASC,
-        nameOrder: Order.DESC,
-        categoryOrder: Order.ASC,
-        stateOrder: Order.DESC,
+        sortField: 'assetCode',
+        sortOrder: Order.ASC,
         categoryIds: [1],
         states: [AssetState.ASSIGNED, AssetState.AVAILABLE],
       };
@@ -432,10 +424,8 @@ describe('AssetService', () => {
       const dto: AssetPageOptions = {
         take: 10,
         skip: 10,
-        assetCodeOrder: Order.ASC,
-        nameOrder: Order.DESC,
-        categoryOrder: Order.ASC,
-        stateOrder: Order.DESC,
+        sortField: 'assetCode',
+        sortOrder: Order.ASC,
         categoryIds: [1, 2],
         states: [AssetState.ASSIGNED, AssetState.AVAILABLE],
       };
@@ -475,10 +465,8 @@ describe('AssetService', () => {
       const dto: AssetPageOptions = {
         take: 10,
         skip: 10,
-        assetCodeOrder: Order.ASC,
-        nameOrder: Order.DESC,
-        categoryOrder: Order.ASC,
-        stateOrder: Order.DESC,
+        sortField: 'assetCode',
+        sortOrder: Order.ASC,
         categoryIds: [1, 2],
         states: [AssetState.ASSIGNED, AssetState.AVAILABLE],
       };
