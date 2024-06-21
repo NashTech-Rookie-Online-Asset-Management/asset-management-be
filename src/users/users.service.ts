@@ -1,5 +1,11 @@
 import * as bcrypt from 'bcryptjs';
-import { Account, Location } from '@prisma/client';
+import {
+  Account,
+  AssignmentState,
+  Location,
+  RequestState,
+  UserStatus,
+} from '@prisma/client';
 import {
   BadRequestException,
   Injectable,
@@ -17,11 +23,11 @@ import { Messages } from 'src/common/constants';
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
-  async create(createUserDto: CreateUserDto) {
+  async create(adminLocation: Location, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
-
     const dob = new Date(createUserDto.dob);
     const joinedAt = new Date(createUserDto.joinedAt);
+    const userLocation = location ? location : adminLocation;
 
     //generate staffCode
     const usersCount = await this.prismaService.account.count();
@@ -44,7 +50,7 @@ export class UsersService {
           type,
           username,
           password: hashedPassword,
-          location,
+          location: userLocation,
         },
         select: {
           staffCode: true,
@@ -295,5 +301,85 @@ export class UsersService {
         location: true,
       },
     });
+  }
+
+  async disable(userStaffCode: string) {
+    const userExisted = await this.prismaService.account.findUnique({
+      where: { staffCode: userStaffCode },
+      include: {
+        assignedTos: {
+          where: {
+            state: {
+              in: [
+                AssignmentState.WAITING_FOR_ACCEPTANCE,
+                AssignmentState.ACCEPTED,
+                AssignmentState.IS_REQUESTED,
+              ],
+            },
+          },
+          include: {
+            returningRequest: {
+              where: {
+                state: RequestState.WAITING_FOR_RETURNING,
+              },
+            },
+          },
+        },
+        assignedBys: {
+          where: {
+            state: {
+              in: [
+                AssignmentState.WAITING_FOR_ACCEPTANCE,
+                AssignmentState.ACCEPTED,
+                AssignmentState.IS_REQUESTED,
+              ],
+            },
+          },
+          include: {
+            returningRequest: {
+              where: {
+                state: RequestState.WAITING_FOR_RETURNING,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!userExisted) {
+      throw new BadRequestException(Messages.USER.FAILED.NOT_FOUND);
+    }
+
+    const hasValidAssignments = userExisted.assignedTos.some(
+      (assignment) =>
+        (
+          [
+            AssignmentState.WAITING_FOR_ACCEPTANCE,
+            AssignmentState.ACCEPTED,
+          ] as AssignmentState[]
+        ).includes(assignment.state) ||
+        (assignment.state === AssignmentState.IS_REQUESTED &&
+          assignment.returningRequest &&
+          assignment.returningRequest.state ===
+            RequestState.WAITING_FOR_RETURNING),
+    );
+
+    if (hasValidAssignments) {
+      throw new BadRequestException(Messages.USER.FAILED.DISABLED_FAILED);
+    }
+
+    const updatedUser = await this.prismaService.account.update({
+      where: { staffCode: userStaffCode },
+      data: { status: UserStatus.DISABLED },
+      select: {
+        staffCode: true,
+        firstName: true,
+        lastName: true,
+        username: true,
+        status: true,
+      },
+    });
+
+    return updatedUser;
   }
 }

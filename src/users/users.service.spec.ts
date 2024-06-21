@@ -3,7 +3,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { AccountType, Location } from '@prisma/client';
+import {
+  AccountType,
+  AssignmentState,
+  Location,
+  RequestState,
+  UserStatus,
+} from '@prisma/client';
 import { UsersService } from './users.service';
 import { Messages, Order } from 'src/common/constants';
 
@@ -44,6 +50,7 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('should create a user successfully', async () => {
+      const adminLocation = Location.HCM;
       const createUserDto: CreateUserDto = {
         firstName: 'John',
         lastName: 'Doe',
@@ -71,7 +78,7 @@ describe('UsersService', () => {
       );
       jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword' as never);
 
-      const result = await service.create(createUserDto);
+      const result = await service.create(adminLocation, createUserDto);
 
       expect(result).toEqual(mockedCreateReturnValue);
       expect(mockPrismaService.account.count).toHaveBeenCalled();
@@ -102,6 +109,7 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException if create fails', async () => {
+      const adminLocation = Location.HCM;
       const createUserDto: CreateUserDto = {
         firstName: 'John',
         lastName: 'Doe',
@@ -117,9 +125,9 @@ describe('UsersService', () => {
         new Error('Failed to create user'),
       );
 
-      await expect(service.create(createUserDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.create(adminLocation, createUserDto),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -504,6 +512,112 @@ describe('UsersService', () => {
         service.update(userStaffCode, updateUserDto),
       ).rejects.toThrow(
         new UnauthorizedException(Messages.USER.FAILED.NOT_FOUND),
+      );
+    });
+  });
+
+  describe('disable', () => {
+    it('should disable a user successfully', async () => {
+      const userStaffCode = 'SD0001';
+
+      // Mock the return value of PrismaService methods for findUnique and update
+      const mockUser = {
+        staffCode: userStaffCode,
+        assignedTos: [],
+        assignedBys: [],
+      };
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
+        mockUser,
+      );
+      (mockPrismaService.account.update as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.DISABLED,
+      });
+
+      const result = await service.disable(userStaffCode);
+
+      expect(result.status).toEqual(UserStatus.DISABLED);
+      expect(mockPrismaService.account.findUnique).toHaveBeenCalledWith({
+        where: { staffCode: userStaffCode },
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+          assignedBys: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+        },
+      });
+      expect(mockPrismaService.account.update).toHaveBeenCalledWith({
+        where: { staffCode: userStaffCode },
+        data: { status: UserStatus.DISABLED },
+        select: {
+          staffCode: true,
+          firstName: true,
+          lastName: true,
+          username: true,
+          status: true,
+        },
+      });
+    });
+
+    it('should throw BadRequestException if user is not found', async () => {
+      const userStaffCode = 'SD0001';
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
+        null,
+      );
+
+      await expect(service.disable(userStaffCode)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('should throw BadRequestException if user has valid assignments', async () => {
+      const userStaffCode = 'SD0001';
+
+      const mockUser = {
+        staffCode: userStaffCode,
+        assignedTos: [{ state: AssignmentState.ACCEPTED }],
+        assignedBys: [],
+      };
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
+        mockUser,
+      );
+
+      await expect(service.disable(userStaffCode)).rejects.toThrow(
+        BadRequestException,
       );
     });
   });

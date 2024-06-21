@@ -1,5 +1,11 @@
 import { AccountType, Gender, Location } from '@prisma/client';
-import { IsNotEmpty, IsDateString, IsEnum, IsString } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsDateString,
+  IsEnum,
+  IsString,
+  IsOptional,
+} from 'class-validator';
 import {
   IsOlderThan18,
   IsValidJoinedDate,
@@ -43,6 +49,7 @@ export class CreateUserDto {
 
   @ApiProperty({ enum: Location })
   @IsNotEmpty()
+  @IsOptional()
   @IsEnum(Location, { message: Messages.USER.VALIDATE.LOCATION_INVALID })
-  location: Location;
+  location?: Location;
 }

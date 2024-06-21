@@ -19,6 +19,7 @@ describe('UsersController', () => {
     update: jest.fn(),
     selectMany: jest.fn(),
     selectOne: jest.fn(),
+    disable: jest.fn(),
   };
 
   const mockJwtAuthGuard = {
@@ -78,8 +79,13 @@ describe('UsersController', () => {
 
       mockUsersService.create.mockResolvedValue(result);
 
-      expect(await controller.create(createUserDto)).toEqual(result);
-      expect(usersService.create).toHaveBeenCalledWith(createUserDto);
+      expect(await controller.create(Location.HCM, createUserDto)).toEqual(
+        result,
+      );
+      expect(usersService.create).toHaveBeenCalledWith(
+        Location.HCM,
+        createUserDto,
+      );
     });
 
     it('should throw an error if the user creation fails', async () => {
@@ -97,10 +103,13 @@ describe('UsersController', () => {
         new Error('Failed to create user'),
       );
 
-      await expect(controller.create(createUserDto)).rejects.toThrow(
-        'Failed to create user',
+      await expect(
+        controller.create(Location.HCM, createUserDto),
+      ).rejects.toThrow('Failed to create user');
+      expect(usersService.create).toHaveBeenCalledWith(
+        Location.HCM,
+        createUserDto,
       );
-      expect(usersService.create).toHaveBeenCalledWith(createUserDto);
     });
   });
 
@@ -238,6 +247,31 @@ describe('UsersController', () => {
         'Failed to retrieve user',
       );
       expect(usersService.selectOne).toHaveBeenCalledWith(username);
+    });
+  });
+
+  describe('disabledUser', () => {
+    it('should disable a user successfully', async () => {
+      const userStaffCode = 'SD0001';
+      const result = { success: true };
+
+      mockUsersService.disable.mockResolvedValue(result);
+
+      expect(await controller.disabledUser(userStaffCode)).toEqual(result);
+      expect(usersService.disable).toHaveBeenCalledWith(userStaffCode);
+    });
+
+    it('should throw an error if disabling the user fails', async () => {
+      const userStaffCode = 'SD0001';
+
+      mockUsersService.disable.mockRejectedValue(
+        new Error('Failed to disable user'),
+      );
+
+      await expect(controller.disabledUser(userStaffCode)).rejects.toThrow(
+        'Failed to disable user',
+      );
+      expect(usersService.disable).toHaveBeenCalledWith(userStaffCode);
     });
   });
 });

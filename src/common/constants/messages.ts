@@ -25,7 +25,9 @@ export const Messages = {
     VALIDATE: {},
   },
   USER: {
-    SUCCESS: {},
+    SUCCESS: {
+      DISABLED: 'Disabled successfully',
+    },
     FAILED: {
       DISABLED: 'This account is disabled',
       NOT_FOUND: 'User not found',
@@ -40,6 +42,8 @@ export const Messages = {
       JOINED_DATE_UNDER_AGE:
         'Joined date must be at least 18 years after the date of birth',
       JOINED_DATE_INVALID: 'Invalid joined date',
+      DISABLED_FAILED:
+        'There are valid assignments belonging to this user. Please close all assignments before disabling user.',
     },
     VALIDATE: {
       DOB: 'Date of Birth is required',

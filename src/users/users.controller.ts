@@ -8,6 +8,7 @@ import {
   Query,
   Param,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -25,8 +26,11 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountType.ADMIN)
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(
+    @GetUser('location') adminLocation: Location,
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    return this.usersService.create(adminLocation, createUserDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -55,5 +59,12 @@ export class UsersController {
   @Get(':username')
   async getUser(@Param('username') username: string) {
     return this.usersService.selectOne(username);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(AccountType.ADMIN)
+  @Delete(':staffCode')
+  async disabledUser(@Param('staffCode') userStaffCode: string) {
+    return this.usersService.disable(userStaffCode);
   }
 }
