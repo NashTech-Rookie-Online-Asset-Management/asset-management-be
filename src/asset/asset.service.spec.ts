@@ -5,10 +5,11 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AssetState, Location } from '@prisma/client';
-import { ERROR_MESSAGES, Order } from 'src/common/constants';
+import { ERROR_MESSAGES, Messages, Order } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AssetService } from './asset.service';
 import { AssetPageOptions } from './dto';
+import { CreateAssetDto } from './dto/create-asset.dto';
 
 describe('AssetService', () => {
   let assetService: AssetService;
@@ -23,11 +24,14 @@ describe('AssetService', () => {
           useValue: {
             category: {
               findMany: jest.fn(),
+              findUnique: jest.fn(),
             },
             asset: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
               count: jest.fn(),
+              create: jest.fn(),
+              findFirst: jest.fn(),
             },
           },
         },
@@ -642,6 +646,61 @@ describe('AssetService', () => {
       await expect(
         assetService.getAsset(location, nonExistingAssetId),
       ).rejects.toThrow(ERROR_MESSAGES.ASSET_NOT_FOUND);
+    });
+  });
+
+  describe('create', () => {
+    const location = Location.HCM;
+    const createAssetDto: CreateAssetDto = {
+      name: 'Laptop HP Probook 450 G1',
+      categoryId: 1,
+      specification: 'Intel Core i5, 8GB RAM, 256GB SSD',
+      installedDate: new Date(),
+      state: 'AVAILABLE',
+    };
+
+    it('should throw BadRequestException if location is null', async () => {
+      await expect(assetService.create(null, createAssetDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(assetService.create(null, createAssetDto)).rejects.toThrow(
+        ERROR_MESSAGES.ASSET_INVALID_LOCATION,
+      );
+    });
+
+    it('should throw BadRequestException if location is undefined', async () => {
+      await expect(
+        assetService.create(undefined, createAssetDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        assetService.create(undefined, createAssetDto),
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
+    });
+
+    it('should create and return the asset', async () => {
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(null);
+      (prismaService.category.findUnique as jest.Mock).mockResolvedValue({
+        id: 1,
+        name: 'Laptop',
+      });
+      (prismaService.asset.create as jest.Mock).mockResolvedValue({
+        id: 1,
+        name: 'Laptop HP Probook 450 G1',
+        categoryId: 1,
+        specification: 'Intel Core i5, 8GB RAM, 256GB SSD',
+        location: Location.HCM,
+      });
+
+      const result = await assetService.create(location, createAssetDto);
+
+      expect(result).toHaveProperty('id', 1);
+      expect(result).toHaveProperty('name', 'Laptop HP Probook 450 G1');
+      expect(result).toHaveProperty('categoryId', 1);
+      expect(result).toHaveProperty(
+        'specification',
+        'Intel Core i5, 8GB RAM, 256GB SSD',
+      );
+      expect(result).toHaveProperty('location', Location.HCM);
     });
   });
 });

@@ -1,8 +1,10 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -11,7 +13,7 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AssetService } from './asset.service';
-import { AssetPageOptions } from './dto';
+import { AssetPageOptions, CreateAssetDto } from './dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @Controller('assets')
@@ -37,5 +39,15 @@ export class AssetController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.assetService.getAsset(location, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(AccountType.ADMIN)
+  @Post()
+  createAsset(
+    @GetUser('location') location: Location,
+    @Body() createAssetDto: CreateAssetDto,
+  ) {
+    return this.assetService.create(location, createAssetDto);
   }
 }

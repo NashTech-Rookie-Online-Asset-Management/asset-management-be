@@ -5,9 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Location } from '@prisma/client';
-import { ERROR_MESSAGES } from 'src/common/constants';
+import { ERROR_MESSAGES, Messages } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AssetPageOptions } from './dto';
+import { CreateAssetDto } from './dto/create-asset.dto';
 
 @Injectable()
 export class AssetService {
@@ -171,5 +172,52 @@ export class AssetService {
     }
 
     return asset;
+  }
+
+  async create(location: Location, createAssetDto: CreateAssetDto) {
+    if (!Object.values(Location).includes(location)) {
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    }
+    const category = await this.prismaService.category.findUnique({
+      where: { id: createAssetDto.categoryId },
+    });
+    if (!category) {
+      throw new BadRequestException(Messages.ASSET.FAILED.CATEGORY_NOT_FOUND);
+    }
+
+    const lastAsset = await this.prismaService.asset.findFirst({
+      where: { categoryId: createAssetDto.categoryId },
+      orderBy: { assetCode: 'desc' },
+    });
+
+    const lastAssetCodeNumber = lastAsset
+      ? parseInt(lastAsset.assetCode.slice(category.prefix.length))
+      : 0;
+    const newAssetCode = `${category.prefix}${(lastAssetCodeNumber + 1).toString().padStart(6, '0')}`;
+
+    const newAsset = await this.prismaService.asset.create({
+      data: {
+        assetCode: newAssetCode,
+        name: createAssetDto.name,
+        specification: createAssetDto.specification,
+        installedDate: new Date(createAssetDto.installedDate),
+        state: createAssetDto.state,
+        location: location,
+        categoryId: createAssetDto.categoryId,
+      },
+      select: {
+        assetCode: true,
+        name: true,
+        specification: true,
+        state: true,
+        category: {
+          select: {
+            name: true,
+            prefix: true,
+          },
+        },
+      },
+    });
+    return newAsset;
   }
 }

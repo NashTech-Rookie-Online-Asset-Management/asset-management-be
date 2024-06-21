@@ -6,9 +6,9 @@ export const Messages = {
       LOGOUT: 'Logout successful',
     },
     FAILED: {
-      LOGIN: 'Username or password is incorrect. Please try again',
+      LOGIN: 'Username or Password is incorrect. Please try again',
       PASSWORD_NOT_CORRECT: 'Password is incorrect',
-      PASSWORD_NOT_SAME: 'Old password and new password should not be the same',
+      PASSWORD_NOT_SAME: 'Old password and New password should not be the same',
     },
     VALIDATE: {
       USER_NAME: 'Username is required',
@@ -61,10 +61,24 @@ export const Messages = {
     FAILED: {
       INVALID_LOCATION: 'Invalid location',
       NOT_FOUND: 'Asset not found',
-      CATEGORY_NOT_FOUND: 'Some categories do not exist',
+      CATEGORY_NOT_FOUND: 'Category not found',
       ACCESS_DENIED: 'You do not have access to this asset',
+      ASSET_ALREADY_EXISTS: 'Asset already exists',
     },
-    VALIDATE: {},
+    VALIDATE: {
+      NAME: 'Name is required',
+      NAME_INVALID: 'Invalid name',
+      CATEGORY: 'Category is required',
+      CATEGORY_INVALID: 'Invalid category',
+      STATE: 'State is required',
+      STATE_INVALID: 'Invalid state',
+      INSTALLED_DATE: 'Installed date is required',
+      INSTALLED_DATE_INVALID: 'Invalid installed date',
+      SPECIFICATION: 'Specification is required',
+      SPECIFICATION_INVALID: 'Invalid specification',
+      LOCATION: 'Location is required',
+      LOCATION_INVALID: 'Invalid location',
+    },
   },
   CATEGORY: {
     SUCCESS: {},
