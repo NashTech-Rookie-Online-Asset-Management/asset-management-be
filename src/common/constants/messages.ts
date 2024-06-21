@@ -66,4 +66,25 @@ export const Messages = {
     },
     VALIDATE: {},
   },
+  CATEGORY: {
+    SUCCESS: {},
+    FAILED: {
+      NAME_EXIST:
+        'Category is already existed. Please enter a different category',
+      PREFIX_EXIST:
+        'Prefix is already existed. Please enter a different prefix',
+      CATEGORY_CAN_NOT_BE_DELETED:
+        'Category is assigned to an asset. Please delete all associated assets first',
+      CATEGORY_CAN_NOT_BE_CHANGED:
+        'Category is assigned to an asset. Please delete all associated assets first',
+      NOT_FOUND: 'Category not found',
+    },
+    VALIDATE: {
+      NAME: 'Name is required',
+      PREFIX: 'Prefix is required',
+      PREFIX_UPPER_CASE:
+        'Prefix must be uppercase. Please enter a different prefix',
+      PREFIX_LENGTH: 'Prefix must be 2 characters',
+    },
+  },
 };

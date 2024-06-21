@@ -8,6 +8,7 @@ import configuration from './common/config/configuration';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
 import { UsersModule } from './users/users.module';
+import { CategoryModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     AssetModule,
     UsersModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
