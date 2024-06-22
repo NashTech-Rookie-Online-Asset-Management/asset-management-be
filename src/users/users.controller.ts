@@ -18,6 +18,8 @@ import { AccountType } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto, UserPageOptions } from './dto';
 import { Location } from '@prisma/client';
+import { User } from 'src/common/decorators/user.decorator';
+import { UserType } from './types';
 @Controller('users')
 @ApiTags('USERS')
 export class UsersController {
@@ -35,12 +37,13 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountType.ADMIN)
-  @Patch()
+  @Patch(':staffCode')
   update(
-    @GetUser('staffCode') userStaffCode: string,
+    @User() admin: UserType,
+    @Param('staffCode') userStaffCode: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.update(userStaffCode, updateUserDto);
+    return this.usersService.update(admin, userStaffCode, updateUserDto);
   }
 
   @UseGuards(JwtAuthGuard)

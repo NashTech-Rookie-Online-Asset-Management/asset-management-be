@@ -9,6 +9,7 @@ export const Messages = {
       LOGIN: 'Username or Password is incorrect. Please try again',
       PASSWORD_NOT_CORRECT: 'Password is incorrect',
       PASSWORD_NOT_SAME: 'Old password and New password should not be the same',
+      INACTIVE: 'This account is inactive',
     },
     VALIDATE: {
       USER_NAME: 'Username is required',
@@ -44,6 +45,10 @@ export const Messages = {
       JOINED_DATE_INVALID: 'Invalid joined date',
       DISABLED_FAILED:
         'There are valid assignments belonging to this user. Please close all assignments before disabling user.',
+      UPDATE_SELF: 'You can not update your own account',
+      UPDATE_SAME_TYPE: 'You can not update to the same account type',
+      UPDATE_NOT_SAME_LOCATION:
+        'You can only update the user within the same location',
     },
     VALIDATE: {
       DOB: 'Date of Birth is required',
@@ -65,6 +70,8 @@ export const Messages = {
       ACCESS_DENIED: 'You do not have access to this asset',
       ASSET_IS_ASSIGNED: 'Asset is assigned',
       ASSET_STATE_INVALID: 'Invalid asset state',
+      UPDATE_NOT_SAME_LOCATION:
+        'You can only update the asset within the same location',
     },
     VALIDATE: {
       NAME: 'Name is required',

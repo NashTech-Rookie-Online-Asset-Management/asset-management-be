@@ -4,12 +4,21 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/role.guard';
-import { AccountType, Location } from '@prisma/client';
+import { AccountType, Location, UserStatus } from '@prisma/client';
 
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UpdateUserDto, UserPageOptions } from './dto';
+import { UserType } from './types';
 
+const adminMockup: UserType = {
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  location: Location.HCM,
+  type: AccountType.ADMIN,
+  username: 'admin',
+};
 describe('UsersController', () => {
   let controller: UsersController;
   let usersService: UsersService;
@@ -134,10 +143,11 @@ describe('UsersController', () => {
 
       mockUsersService.update = jest.fn().mockResolvedValue(result);
 
-      expect(await controller.update(userStaffCode, updateUserDto)).toEqual(
-        result,
-      );
+      expect(
+        await controller.update(adminMockup, userStaffCode, updateUserDto),
+      ).toEqual(result);
       expect(usersService.update).toHaveBeenCalledWith(
+        adminMockup,
         userStaffCode,
         updateUserDto,
       );
@@ -157,9 +167,10 @@ describe('UsersController', () => {
         .mockRejectedValue(new Error('Failed to update user'));
 
       await expect(
-        controller.update(userStaffCode, updateUserDto),
+        controller.update(adminMockup, userStaffCode, updateUserDto),
       ).rejects.toThrow('Failed to update user');
       expect(usersService.update).toHaveBeenCalledWith(
+        adminMockup,
         userStaffCode,
         updateUserDto,
       );

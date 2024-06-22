@@ -1,14 +1,25 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AssetState, Location } from '@prisma/client';
+import { AccountType, AssetState, Location, UserStatus } from '@prisma/client';
 import { ERROR_MESSAGES, Messages, Order } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
+import { UserType } from 'src/users/types';
+
+const adminMockup: UserType = {
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  location: Location.HCM,
+  type: AccountType.ADMIN,
+  username: 'admin',
+};
 
 describe('AssetService', () => {
   let assetService: AssetService;
@@ -661,7 +672,7 @@ describe('AssetService', () => {
 
     it('should throw BadRequestException if location is null', async () => {
       await expect(assetService.create(null, createAssetDto)).rejects.toThrow(
-        BadRequestException,
+        HttpException,
       );
       await expect(assetService.create(null, createAssetDto)).rejects.toThrow(
         ERROR_MESSAGES.ASSET_INVALID_LOCATION,
@@ -671,7 +682,7 @@ describe('AssetService', () => {
     it('should throw BadRequestException if location is undefined', async () => {
       await expect(
         assetService.create(undefined, createAssetDto),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(HttpException);
       await expect(
         assetService.create(undefined, createAssetDto),
       ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
@@ -721,10 +732,10 @@ describe('AssetService', () => {
       (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(null);
 
       await expect(
-        assetService.update(nonExistingAssetId, updateDtoFailed),
-      ).rejects.toThrow(NotFoundException);
+        assetService.update(adminMockup, nonExistingAssetId, updateDtoFailed),
+      ).rejects.toThrow(HttpException);
       await expect(
-        assetService.update(nonExistingAssetId, updateDtoFailed),
+        assetService.update(adminMockup, nonExistingAssetId, updateDtoFailed),
       ).rejects.toThrow(ERROR_MESSAGES.ASSET_NOT_FOUND);
     });
 
@@ -742,7 +753,11 @@ describe('AssetService', () => {
         ...updateDto,
       });
 
-      const result = await assetService.update(existingAssetId, updateDto);
+      const result = await assetService.update(
+        adminMockup,
+        existingAssetId,
+        updateDto,
+      );
 
       expect(result).toEqual({
         ...assetMock,

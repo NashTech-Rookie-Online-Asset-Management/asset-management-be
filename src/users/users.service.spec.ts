@@ -12,6 +12,16 @@ import {
 } from '@prisma/client';
 import { UsersService } from './users.service';
 import { Messages, Order } from 'src/common/constants';
+import { UserType } from './types';
+
+const adminMockup: UserType = {
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  location: Location.HCM,
+  type: AccountType.ADMIN,
+  username: 'admin',
+};
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -49,29 +59,28 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
+    const adminLocation = Location.HCM;
+    const createUserDto: CreateUserDto = {
+      firstName: 'John',
+      lastName: 'Doe',
+      dob: new Date('1990-01-01'),
+      joinedAt: new Date('2024-06-17'),
+      gender: 'MALE',
+      type: 'ADMIN',
+      location: Location.HCM,
+    };
+
+    const mockedCreateReturnValue = {
+      staffCode: 'SD0001',
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johnd',
+      gender: 'MALE',
+      dob: new Date('2024-06-17'),
+      joinedAt: new Date('2024-06-17'),
+      type: 'ADMIN',
+    };
     it('should create a user successfully', async () => {
-      const adminLocation = Location.HCM;
-      const createUserDto: CreateUserDto = {
-        firstName: 'John',
-        lastName: 'Doe',
-        dob: new Date('1990-01-01'),
-        joinedAt: new Date('2024-06-17'),
-        gender: 'MALE',
-        type: 'ADMIN',
-        location: Location.HCM,
-      };
-
-      const mockedCreateReturnValue = {
-        staffCode: 'SD0001',
-        firstName: 'John',
-        lastName: 'Doe',
-        username: 'johnd',
-        gender: 'MALE',
-        dob: new Date('2024-06-17'),
-        joinedAt: new Date('2024-06-17'),
-        type: 'ADMIN',
-      };
-
       (mockPrismaService.account.count as jest.Mock).mockResolvedValue(0);
       (mockPrismaService.account.create as jest.Mock).mockResolvedValue(
         mockedCreateReturnValue,
@@ -109,17 +118,6 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException if create fails', async () => {
-      const adminLocation = Location.HCM;
-      const createUserDto: CreateUserDto = {
-        firstName: 'John',
-        lastName: 'Doe',
-        dob: new Date('1990-01-01'),
-        joinedAt: new Date('2024-06-17'),
-        gender: 'MALE',
-        type: 'ADMIN',
-        location: Location.HCM,
-      };
-
       (mockPrismaService.account.count as jest.Mock).mockResolvedValue(0);
       (mockPrismaService.account.create as jest.Mock).mockRejectedValue(
         new Error('Failed to create user'),
@@ -337,22 +335,24 @@ describe('UsersService', () => {
   });
 
   describe('update', () => {
-    it('should update a user successfully', async () => {
-      const userStaffCode = 'SD0001';
-      const updateUserDto: UpdateUserDto = {
-        dob: new Date('1990-01-01'),
-        gender: 'MALE',
-        joinedAt: new Date('2024-06-17'),
-        type: AccountType.ADMIN,
-      };
+    const userStaffCode = 'SD0002';
+    const updateUserDto: UpdateUserDto = {
+      dob: new Date('2010-01-01'),
+      gender: 'MALE',
+      joinedAt: new Date('2024-06-17'),
+      type: AccountType.STAFF,
+    };
 
-      const existingUser = {
-        staffCode: userStaffCode,
-        dob: new Date('1990-01-01'),
-        gender: 'FEMALE',
-        joinedAt: new Date('2020-01-01'),
-        type: AccountType.STAFF,
-      };
+    const existingUser = {
+      staffCode: userStaffCode,
+      dob: new Date('1990-01-01'),
+      gender: 'FEMALE',
+      joinedAt: new Date('2020-01-01'),
+      type: AccountType.STAFF,
+      location: Location.HCM,
+    };
+    it('should update a user successfully', async () => {
+      updateUserDto.dob = new Date('2001-06-17');
 
       const updatedUser = {
         ...existingUser,
@@ -364,7 +364,11 @@ describe('UsersService', () => {
         updatedUser,
       );
 
-      const result = await service.update(userStaffCode, updateUserDto);
+      const result = await service.update(
+        adminMockup,
+        userStaffCode,
+        updateUserDto,
+      );
 
       expect(result).toEqual(updatedUser);
       expect(mockPrismaService.account.update).toHaveBeenCalledWith({
@@ -388,86 +392,34 @@ describe('UsersService', () => {
       });
     });
 
-    it('should throw BadRequestException if user is underage', async () => {
-      const userStaffCode = 'SD0001';
-      const updateUserDto: UpdateUserDto = {
-        dob: new Date('2010-01-01'),
-        gender: 'MALE',
-        joinedAt: new Date('2024-06-17'),
-        type: AccountType.ADMIN,
-      };
-
-      const existingUser = {
-        staffCode: userStaffCode,
-        dob: new Date('1990-01-01'),
-        gender: 'FEMALE',
-        joinedAt: new Date('2020-01-01'),
-        type: AccountType.STAFF,
-      };
-
-      jest.spyOn(service as any, 'findUser').mockResolvedValue(existingUser);
-
-      await expect(
-        service.update(userStaffCode, updateUserDto),
-      ).rejects.toThrow(
-        new BadRequestException(Messages.USER.FAILED.UNDER_AGE),
-      );
-    });
-
     it('should throw BadRequestException if joined date is invalid', async () => {
-      const userStaffCode = 'SD0001';
-      const updateUserDto: UpdateUserDto = {
-        dob: new Date('1990-01-01'),
-        gender: 'MALE',
-        joinedAt: new Date('1990-01-01'),
-        type: AccountType.ADMIN,
-      };
-
-      const existingUser = {
-        staffCode: userStaffCode,
-        dob: new Date('1990-01-01'),
-        gender: 'FEMALE',
-        joinedAt: new Date('2020-01-01'),
-        type: AccountType.STAFF,
-      };
-
+      updateUserDto.joinedAt = new Date('1990-01-01');
       jest.spyOn(service as any, 'findUser').mockResolvedValue(existingUser);
 
       await expect(
-        service.update(userStaffCode, updateUserDto),
+        service.update(adminMockup, userStaffCode, updateUserDto),
       ).rejects.toThrow(
         new BadRequestException(Messages.USER.FAILED.JOINED_DATE_UNDER_AGE),
       );
     });
 
     it('should throw BadRequestException if joined date is on a weekend', async () => {
-      const userStaffCode = 'SD0001';
-      const updateUserDto: UpdateUserDto = {
-        dob: new Date('1990-01-01'),
-        gender: 'MALE',
-        joinedAt: new Date('2024-06-16'), // Sunday
-        type: AccountType.ADMIN,
-      };
+      const userStaffCode = 'SD0002';
 
-      const existingUser = {
-        staffCode: userStaffCode,
-        dob: new Date('1990-01-01'),
-        gender: 'FEMALE',
-        joinedAt: new Date('2020-01-01'),
-        type: AccountType.STAFF,
-      };
-
+      updateUserDto.dob = new Date('1990-01-01');
+      updateUserDto.joinedAt = new Date('2024-06-16');
+      existingUser.dob = new Date('1990-01-01');
       jest.spyOn(service as any, 'findUser').mockResolvedValue(existingUser);
 
       await expect(
-        service.update(userStaffCode, updateUserDto),
+        service.update(adminMockup, userStaffCode, updateUserDto),
       ).rejects.toThrow(
         new BadRequestException(Messages.USER.FAILED.JOINED_WEEKEND),
       );
     });
 
     it('should throw BadRequestException on error', async () => {
-      const userStaffCode = 'SD0001';
+      const userStaffCode = 'SD0002';
       const updateUserDto: UpdateUserDto = {
         dob: new Date('1990-01-01'),
         gender: 'MALE',
@@ -481,6 +433,7 @@ describe('UsersService', () => {
         gender: 'FEMALE',
         joinedAt: new Date('2020-01-01'),
         type: AccountType.STAFF,
+        location: Location.HCM,
       };
 
       jest.spyOn(service as any, 'findUser').mockResolvedValue(existingUser);
@@ -489,12 +442,12 @@ describe('UsersService', () => {
       );
 
       await expect(
-        service.update(userStaffCode, updateUserDto),
+        service.update(adminMockup, userStaffCode, updateUserDto),
       ).rejects.toThrow(new BadRequestException('Update failed'));
     });
 
     it('should throw UnauthorizedException if user does not exist', async () => {
-      const userStaffCode = 'SD0001';
+      const userStaffCode = 'SD0002';
       const updateUserDto: UpdateUserDto = {
         dob: new Date('1990-01-01'),
         gender: 'MALE',
@@ -509,7 +462,7 @@ describe('UsersService', () => {
         );
 
       await expect(
-        service.update(userStaffCode, updateUserDto),
+        service.update(adminMockup, userStaffCode, updateUserDto),
       ).rejects.toThrow(
         new UnauthorizedException(Messages.USER.FAILED.NOT_FOUND),
       );

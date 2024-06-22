@@ -3,10 +3,20 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AssetController } from './asset.controller';
 import { AssetService } from './asset.service';
 
-import { AssetState, Location } from '@prisma/client';
+import { AccountType, AssetState, Location, UserStatus } from '@prisma/client';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
+import { UserType } from 'src/users/types';
+
+const adminMockup: UserType = {
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  location: Location.HCM,
+  type: AccountType.ADMIN,
+  username: 'admin',
+};
 
 describe('AssetController', () => {
   let controller: AssetController;
@@ -135,9 +145,9 @@ describe('AssetController', () => {
 
       (service.update as jest.Mock).mockResolvedValue(updateResult);
 
-      const result = await controller.updateAsset(id, dto);
+      const result = await controller.updateAsset(adminMockup, id, dto);
 
-      expect(service.update).toHaveBeenCalledWith(id, dto);
+      expect(service.update).toHaveBeenCalledWith(adminMockup, id, dto);
       expect(result).toEqual(updateResult);
     });
   });

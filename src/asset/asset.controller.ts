@@ -16,6 +16,8 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
 import { ApiTags } from '@nestjs/swagger';
+import { User } from 'src/common/decorators/user.decorator';
+import { UserType } from 'src/users/types';
 
 @Controller('assets')
 @ApiTags('ASSETS')
@@ -56,9 +58,10 @@ export class AssetController {
   @Roles(AccountType.ADMIN)
   @Patch(':id')
   updateAsset(
+    @User() admin: UserType,
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAssetDto,
   ) {
-    return this.assetService.update(id, dto);
+    return this.assetService.update(admin, id, dto);
   }
 }

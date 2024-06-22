@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcryptjs';
 import {
   Account,
+  AccountType,
   AssignmentState,
   Location,
   RequestState,
@@ -16,10 +17,10 @@ import { CreateUserDto, UpdateUserDto, UserPageOptions } from './dto';
 import {
   formatFirstName,
   formatDate,
-  isOlderThan18,
   isAtLeast18YearsAfter,
 } from '../common/utils';
 import { Messages } from 'src/common/constants';
+import { UserType } from './types';
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
@@ -68,18 +69,37 @@ export class UsersService {
     }
   }
 
-  async update(userStaffCode: string, updateUserDto: UpdateUserDto) {
+  async update(
+    admin: UserType,
+    userStaffCode: string,
+    updateUserDto: UpdateUserDto,
+  ) {
     try {
+      if (admin.staffCode === userStaffCode) {
+        throw new BadRequestException(Messages.USER.FAILED.UPDATE_SELF);
+      }
+
       const userExisted = await this.findUser(
         { staffCode: userStaffCode },
         Messages.USER.FAILED.NOT_FOUND,
       );
+
+      if (
+        userExisted.location !== admin.location &&
+        admin.type === AccountType.ADMIN
+      ) {
+        throw new BadRequestException(
+          Messages.USER.FAILED.UPDATE_NOT_SAME_LOCATION,
+        );
+      }
+
+      if (userExisted.type === admin.type) {
+        throw new BadRequestException(Messages.USER.FAILED.UPDATE_SAME_TYPE);
+      }
+
       const { dob, gender, joinedAt, type } = updateUserDto;
       if (dob) {
         const newDate = new Date(dob);
-        if (!isOlderThan18(newDate)) {
-          throw new BadRequestException(Messages.USER.FAILED.UNDER_AGE);
-        }
         userExisted.dob = newDate;
       }
       if (joinedAt) {
