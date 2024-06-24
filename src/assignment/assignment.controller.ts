@@ -9,7 +9,6 @@ import { ApiTags } from '@nestjs/swagger';
 @Controller('assignment')
 @UseGuards(JwtAuthGuard)
 @Roles(AccountType.ADMIN)
-@Roles(AccountType.ROOT)
 @ApiTags('ASSIGNMENTS')
 export class AssignmentController {
   constructor(private readonly assignmentService: AssignmentService) {}

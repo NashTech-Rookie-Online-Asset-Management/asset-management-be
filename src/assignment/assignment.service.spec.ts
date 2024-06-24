@@ -171,6 +171,32 @@ describe('Assignment Service', () => {
     }
   });
 
+  it('Should not create assignemnt if assigned user is root user', async () => {
+    (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: 2,
+      location: Location.HCM,
+      type: AccountType.ROOT,
+    });
+
+    (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
+      id: 1,
+      state: AssetState.AVAILABLE,
+      location: Location.HCM,
+    });
+
+    try {
+      await service.create(createdUser, {
+        assetCode: 'AS001',
+        staffCode: 'ST001',
+        assignedDate: new Date().toLocaleString(),
+        note: null,
+      });
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_IS_ROOT);
+    }
+  });
+
   it('Should not create assignment if asset is assgined', async () => {
     (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
       id: 2,

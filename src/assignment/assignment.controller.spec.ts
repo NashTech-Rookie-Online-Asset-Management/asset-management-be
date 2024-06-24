@@ -108,8 +108,21 @@ describe('UsersController', () => {
     expect(mockAssignmentService.getAvailableUser).toHaveBeenCalled();
   });
 
-  it('Should not get available user if user is not admin', async () => {
+  it('Should not get available user if user is staff', async () => {
     await createTestingModule(AccountType.STAFF);
+    mockAssignmentService.getAvailableUser.mockResolvedValue(mockUserResult);
+
+    try {
+      await controller.getAvailableUser(createdUser);
+    } catch (error) {
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Unauthorized');
+      expect(mockAssignmentService.getAvailableUser).not.toHaveBeenCalled();
+    }
+  });
+
+  it('Should not get available user if user is root', async () => {
+    await createTestingModule(AccountType.ROOT);
     mockAssignmentService.getAvailableUser.mockResolvedValue(mockUserResult);
 
     try {
@@ -143,6 +156,19 @@ describe('UsersController', () => {
     }
   });
 
+  it('Should not get available asset if user is root', async () => {
+    await createTestingModule(AccountType.ROOT);
+    mockAssignmentService.getAvailableAsset.mockResolvedValue(mockAssetResult);
+
+    try {
+      await controller.getAvailableAsset(createdUser);
+    } catch (error) {
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Unauthorized');
+      expect(mockAssignmentService.getAvailableAsset).not.toHaveBeenCalled();
+    }
+  });
+
   it('Should create assignment if user is admin', async () => {
     await createTestingModule(AccountType.ADMIN);
     mockAssignmentService.create.mockResolvedValue(mockCreateAssignmentResult);
@@ -154,6 +180,19 @@ describe('UsersController', () => {
 
   it('Should not create assignment if user is not admin', async () => {
     await createTestingModule(AccountType.STAFF);
+    mockAssignmentService.create.mockResolvedValue(mockCreateAssignmentResult);
+
+    try {
+      await controller.create(createdUser, createAssignmentDto);
+    } catch (error) {
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Unauthorized');
+      expect(mockAssignmentService.create).not.toHaveBeenCalled();
+    }
+  });
+
+  it('Should not create assignment if user is root', async () => {
+    await createTestingModule(AccountType.ROOT);
     mockAssignmentService.create.mockResolvedValue(mockCreateAssignmentResult);
 
     try {

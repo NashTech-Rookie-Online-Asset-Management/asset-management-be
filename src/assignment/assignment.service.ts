@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Account, AssetState } from '@prisma/client';
+import { Account, AccountType, AssetState } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAssignmentDto } from './assignment.dto';
 import { Messages } from 'src/common/constants';
@@ -12,9 +12,14 @@ export class AssignmentService {
     return this.prismaService.account.findMany({
       where: {
         location: user.location,
-        NOT: {
-          id: user.id,
-        },
+        NOT: [
+          {
+            id: user.id,
+          },
+          {
+            type: AccountType.ROOT,
+          },
+        ],
       },
       select: {
         staffCode: true,
@@ -99,6 +104,11 @@ export class AssignmentService {
     // Check if assign user is not found
     if (!assignedUser) {
       throw new BadRequestException(Messages.ASSIGNMENT.FAILED.USER_NOT_FOUND);
+    }
+
+    // // Check if assign user is root
+    if (assignedUser.type === AccountType.ROOT) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.USER_IS_ROOT);
     }
 
     // If asset not found
