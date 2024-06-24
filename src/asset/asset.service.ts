@@ -101,6 +101,11 @@ export class AssetService {
               name: true,
             },
           },
+          assignments: {
+            select: {
+              id: true,
+            },
+          },
         },
       }),
       this.prismaService.asset.count({

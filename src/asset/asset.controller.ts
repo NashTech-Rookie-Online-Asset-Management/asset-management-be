@@ -26,7 +26,7 @@ export class AssetController {
   constructor(private readonly assetService: AssetService) {}
 
   @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
+  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Get()
   getAssets(
     @GetUser('location') location: Location,
@@ -36,7 +36,7 @@ export class AssetController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
+  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Get(':id')
   getAsset(
     @GetUser('location') location: Location,
@@ -46,7 +46,7 @@ export class AssetController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
+  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Post()
   createAsset(
     @GetUser('location') location: Location,
@@ -55,6 +55,8 @@ export class AssetController {
     return this.assetService.create(location, createAssetDto);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Patch(':id')
   updateAsset(
     @User() admin: UserType,
@@ -65,7 +67,7 @@ export class AssetController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
+  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Delete(':id')
   deleteAsset(
     @GetUser('location') location: Location,

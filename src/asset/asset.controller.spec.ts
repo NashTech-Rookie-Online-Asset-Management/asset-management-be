@@ -68,6 +68,7 @@ describe('AssetController', () => {
               id: 1,
               name: 'Category 1',
             },
+            assignments: [],
           },
         ],
         pagination: {
