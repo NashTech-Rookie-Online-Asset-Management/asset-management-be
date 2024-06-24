@@ -1,16 +1,18 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { AccountType, AssetState, Location } from '@prisma/client';
-import { ERROR_MESSAGES, Messages } from 'src/common/constants';
+import { Messages } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from 'src/users/types';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { UserType } from 'src/users/types';
 
 @Injectable()
 export class AssetService {
@@ -18,7 +20,7 @@ export class AssetService {
 
   async getAssets(location: Location, dto: AssetPageOptions) {
     if (!Object.values(Location).includes(location)) {
-      throw new BadRequestException(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
     }
 
     if (dto.categoryIds && dto.categoryIds.length > 0) {
@@ -34,7 +36,7 @@ export class AssetService {
       });
 
       if (categories.length !== dto.categoryIds.length) {
-        throw new BadRequestException(ERROR_MESSAGES.ASSET_CATEGORY_NOT_FOUND);
+        throw new BadRequestException(Messages.ASSET.FAILED.CATEGORY_NOT_FOUND);
       }
     }
 
@@ -117,7 +119,7 @@ export class AssetService {
 
   async getAsset(location: Location, id: number) {
     if (!Object.values(Location).includes(location)) {
-      throw new BadRequestException(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
     }
 
     const asset = await this.prismaService.asset.findUnique({
@@ -166,15 +168,16 @@ export class AssetService {
     });
 
     if (!asset) {
-      throw new NotFoundException(ERROR_MESSAGES.ASSET_NOT_FOUND);
+      throw new NotFoundException(Messages.ASSET.FAILED.NOT_FOUND);
     }
 
     if (asset.location !== location) {
-      throw new ForbiddenException(ERROR_MESSAGES.ASSET_ACCESS_DENIED);
+      throw new ForbiddenException(Messages.ASSET.FAILED.ACCESS_DENIED);
     }
 
     return asset;
   }
+
   async create(location: Location, createAssetDto: CreateAssetDto) {
     try {
       if (!Object.values(Location).includes(location)) {
@@ -289,6 +292,51 @@ export class AssetService {
         error.getStatus(),
         error.getResponse(),
       );
+    }
+  }
+
+  async delete(location: Location, id: number) {
+    if (!Object.values(Location).includes(location)) {
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    }
+
+    const asset = await this.prismaService.asset.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        assignments: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    if (!asset) {
+      throw new NotFoundException(Messages.ASSET.FAILED.NOT_FOUND);
+    }
+
+    if (asset.location !== location) {
+      throw new ForbiddenException(Messages.ASSET.FAILED.ACCESS_DENIED);
+    }
+
+    if (asset.assignments.length > 0) {
+      throw new ConflictException(Messages.ASSET.FAILED.DELETE_DENIED);
+    }
+
+    try {
+      await this.prismaService.asset.delete({
+        where: {
+          id,
+        },
+      });
+
+      return {
+        message: Messages.ASSET.SUCCESS.DELETED,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

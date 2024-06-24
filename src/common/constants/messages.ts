@@ -63,12 +63,17 @@ export const Messages = {
     },
   },
   ASSET: {
-    SUCCESS: {},
+    SUCCESS: {
+      DELETED: 'Deleted asset successfully',
+    },
     FAILED: {
       INVALID_LOCATION: 'Invalid location',
       NOT_FOUND: 'Asset not found',
       CATEGORY_NOT_FOUND: 'Category not found',
       ACCESS_DENIED: 'You do not have access to this asset',
+      ALREADY_EXISTS: 'Asset already exists',
+      DELETE_DENIED:
+        'Cannot delete the asset because it belongs to one or more historical assignments',
       ASSET_IS_ASSIGNED: 'Asset is assigned',
       ASSET_STATE_INVALID: 'Invalid asset state',
       UPDATE_NOT_SAME_LOCATION:

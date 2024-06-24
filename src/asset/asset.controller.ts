@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -9,15 +10,15 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { AccountType, Location } from '@prisma/client';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { Roles } from 'src/common/decorators/role.decorator';
+import { User } from 'src/common/decorators/user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
-import { ApiTags } from '@nestjs/swagger';
-import { User } from 'src/common/decorators/user.decorator';
-import { UserType } from 'src/users/types';
 
 @Controller('assets')
 @ApiTags('ASSETS')
@@ -54,8 +55,6 @@ export class AssetController {
     return this.assetService.create(location, createAssetDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
   @Patch(':id')
   updateAsset(
     @User() admin: UserType,
@@ -63,5 +62,15 @@ export class AssetController {
     @Body() dto: UpdateAssetDto,
   ) {
     return this.assetService.update(admin, id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Roles(AccountType.ADMIN)
+  @Delete(':id')
+  deleteAsset(
+    @GetUser('location') location: Location,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.assetService.delete(location, id);
   }
 }

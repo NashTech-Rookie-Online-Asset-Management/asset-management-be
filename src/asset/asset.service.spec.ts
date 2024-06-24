@@ -1,16 +1,17 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AccountType, AssetState, Location, UserStatus } from '@prisma/client';
-import { ERROR_MESSAGES, Messages, Order } from 'src/common/constants';
+import { Messages, Order } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
-import { UserType } from 'src/users/types';
 
 const adminMockup: UserType = {
   id: 1,
@@ -43,6 +44,7 @@ describe('AssetService', () => {
               update: jest.fn(),
               create: jest.fn(),
               findFirst: jest.fn(),
+              delete: jest.fn(),
             },
           },
         },
@@ -70,7 +72,7 @@ describe('AssetService', () => {
         BadRequestException,
       );
       await expect(assetService.getAssets(null, dto)).rejects.toThrow(
-        ERROR_MESSAGES.ASSET_INVALID_LOCATION,
+        Messages.ASSET.FAILED.INVALID_LOCATION,
       );
     });
 
@@ -84,7 +86,7 @@ describe('AssetService', () => {
         BadRequestException,
       );
       await expect(assetService.getAssets(undefined, dto)).rejects.toThrow(
-        ERROR_MESSAGES.ASSET_INVALID_LOCATION,
+        Messages.ASSET.FAILED.INVALID_LOCATION,
       );
     });
 
@@ -99,7 +101,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(BadRequestException);
       await expect(
         assetService.getAssets('ABC' as Location, dto),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
     });
 
     it('should throw BadRequestException if some categories do not exist', async () => {
@@ -118,7 +120,7 @@ describe('AssetService', () => {
         BadRequestException,
       );
       await expect(assetService.getAssets(location, dto)).rejects.toThrow(
-        ERROR_MESSAGES.ASSET_CATEGORY_NOT_FOUND,
+        Messages.ASSET.FAILED.CATEGORY_NOT_FOUND,
       );
     });
 
@@ -546,7 +548,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(BadRequestException);
       await expect(
         assetService.getAsset(location, existingAssetId),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
     });
 
     it('should throw ForbiddenException if asset location is undefined', async () => {
@@ -572,7 +574,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(BadRequestException);
       await expect(
         assetService.getAsset(location, existingAssetId),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
     });
 
     it('should throw BadRequestException if location is invalid', async () => {
@@ -598,7 +600,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(BadRequestException);
       await expect(
         assetService.getAsset(location as Location, existingAssetId),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_INVALID_LOCATION);
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
     });
 
     it('should throw ForbiddenException if location does not match', async () => {
@@ -623,7 +625,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(ForbiddenException);
       await expect(
         assetService.getAsset(location, existingAssetId),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_ACCESS_DENIED);
+      ).rejects.toThrow(Messages.ASSET.FAILED.ACCESS_DENIED);
     });
 
     it('should return the asset if found and location matches', async () => {
@@ -656,7 +658,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(NotFoundException);
       await expect(
         assetService.getAsset(location, nonExistingAssetId),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_NOT_FOUND);
+      ).rejects.toThrow(Messages.ASSET.FAILED.NOT_FOUND);
     });
   });
 
@@ -675,7 +677,7 @@ describe('AssetService', () => {
         HttpException,
       );
       await expect(assetService.create(null, createAssetDto)).rejects.toThrow(
-        ERROR_MESSAGES.ASSET_INVALID_LOCATION,
+        Messages.ASSET.FAILED.INVALID_LOCATION,
       );
     });
 
@@ -736,7 +738,7 @@ describe('AssetService', () => {
       ).rejects.toThrow(HttpException);
       await expect(
         assetService.update(adminMockup, nonExistingAssetId, updateDtoFailed),
-      ).rejects.toThrow(ERROR_MESSAGES.ASSET_NOT_FOUND);
+      ).rejects.toThrow(Messages.ASSET.FAILED.NOT_FOUND);
     });
 
     it('should update the asset successfully', async () => {
@@ -767,6 +769,100 @@ describe('AssetService', () => {
         where: { id: existingAssetId },
         data: updateDto,
       });
+    });
+  });
+
+  describe('delete', () => {
+    const location = Location.HCM;
+    const existingAssetId = 1;
+    const nonExistingAssetId = 999;
+
+    it('should throw BadRequestException if location is null', async () => {
+      await expect(assetService.delete(null, existingAssetId)).rejects.toThrow(
+        HttpException,
+      );
+      await expect(assetService.delete(null, existingAssetId)).rejects.toThrow(
+        Messages.ASSET.FAILED.INVALID_LOCATION,
+      );
+    });
+
+    it('should throw BadRequestException if location is undefined', async () => {
+      await expect(
+        assetService.delete(undefined, existingAssetId),
+      ).rejects.toThrow(HttpException);
+      await expect(
+        assetService.delete(undefined, existingAssetId),
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
+    });
+
+    it('should throw BadRequestException if location is invalid', async () => {
+      await expect(
+        assetService.delete('ABC' as Location, existingAssetId),
+      ).rejects.toThrow(HttpException);
+      await expect(
+        assetService.delete('ABC' as Location, existingAssetId),
+      ).rejects.toThrow(Messages.ASSET.FAILED.INVALID_LOCATION);
+    });
+
+    it('should throw NotFoundException if asset does not exist', async () => {
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        assetService.delete(location, nonExistingAssetId),
+      ).rejects.toThrow(NotFoundException);
+      await expect(
+        assetService.delete(location, nonExistingAssetId),
+      ).rejects.toThrow(Messages.ASSET.FAILED.NOT_FOUND);
+    });
+
+    it('should throw ForbiddenException if location does not match', async () => {
+      const assetMock = {
+        id: existingAssetId,
+        location: Location.HN,
+      };
+
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(
+        assetMock,
+      );
+
+      await expect(
+        assetService.delete(location, existingAssetId),
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        assetService.delete(location, existingAssetId),
+      ).rejects.toThrow(Messages.ASSET.FAILED.ACCESS_DENIED);
+    });
+
+    it('should throw ConflictException if asset has assignments', async () => {
+      const assetMock = {
+        id: existingAssetId,
+        location: location,
+        assignments: [{ id: 1 }],
+      };
+
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(
+        assetMock,
+      );
+
+      await expect(
+        assetService.delete(location, existingAssetId),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        assetService.delete(location, existingAssetId),
+      ).rejects.toThrow(Messages.ASSET.FAILED.DELETE_DENIED);
+    });
+
+    it('should delete the asset successfully', async () => {
+      const assetMock = {
+        id: existingAssetId,
+        location: location,
+      };
+
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(
+        assetMock,
+      );
+      (prismaService.asset.delete as jest.Mock).mockResolvedValue({});
+      (prismaService.asset.findFirst as jest.Mock).mockResolvedValue(null);
     });
   });
 });

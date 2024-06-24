@@ -4,10 +4,11 @@ import { AssetController } from './asset.controller';
 import { AssetService } from './asset.service';
 
 import { AccountType, AssetState, Location, UserStatus } from '@prisma/client';
+import { Messages } from 'src/common/constants';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { UserType } from 'src/users/types';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { UserType } from 'src/users/types';
 
 const adminMockup: UserType = {
   id: 1,
@@ -33,6 +34,7 @@ describe('AssetController', () => {
             getAsset: jest.fn(),
             update: jest.fn(),
             create: jest.fn(),
+            delete: jest.fn(),
           },
         },
       ],
@@ -149,6 +151,22 @@ describe('AssetController', () => {
 
       expect(service.update).toHaveBeenCalledWith(adminMockup, id, dto);
       expect(result).toEqual(updateResult);
+    });
+  });
+
+  describe('deleteAsset', () => {
+    it('should call assetService.delete with correct parameters', async () => {
+      const location: Location = Location.HCM;
+      const id = 1;
+
+      jest
+        .spyOn(service, 'delete')
+        .mockResolvedValue({ message: Messages.ASSET.SUCCESS.DELETED });
+
+      expect(await controller.deleteAsset(location, id)).toEqual({
+        message: Messages.ASSET.SUCCESS.DELETED,
+      });
+      expect(service.delete).toHaveBeenCalledWith(location, id);
     });
   });
 });
