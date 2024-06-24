@@ -116,4 +116,16 @@ export const Messages = {
       PREFIX_LENGTH: 'Prefix must be 2 characters',
     },
   },
+  ASSIGNMENT: {
+    SUCCESS: {},
+    FAILED: {
+      USER_NOT_FOUND: 'User not found',
+      ASSET_NOT_FOUND: 'Asset not found',
+      ASSET_NOT_AVAILABLE: 'Asset not available',
+      USER_NOT_THE_SAME: 'User not the same',
+      USER_NOT_IN_SAME_LOCATION: 'User not in same location',
+      ASSET_NOT_IN_SAME_LOCATION: 'Asset not in same location',
+      DATE_IN_THE_PAST: 'Date is in the past',
+    },
+  },
 };

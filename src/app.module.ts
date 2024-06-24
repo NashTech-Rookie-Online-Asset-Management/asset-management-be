@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
 import { UsersModule } from './users/users.module';
 import { CategoryModule } from './category/category.module';
+import { AssignmentModule } from './assignment/assignment.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { CategoryModule } from './category/category.module';
     AssetModule,
     UsersModule,
     CategoryModule,
+    AssignmentModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
