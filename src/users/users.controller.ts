@@ -28,11 +28,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(AccountType.ADMIN)
   @Post()
-  create(
-    @GetUser('location') adminLocation: Location,
-    @Body() createUserDto: CreateUserDto,
-  ) {
-    return this.usersService.create(adminLocation, createUserDto);
+  create(@User() admin: UserType, @Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(admin, createUserDto);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

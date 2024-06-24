@@ -47,6 +47,7 @@ export const Messages = {
         'There are valid assignments belonging to this user. Please close all assignments before disabling user.',
       UPDATE_SELF: 'You can not update your own account',
       UPDATE_SAME_TYPE: 'You can not update to the same account type',
+      CREATE_SAME_TYPE: 'You can not create the same account type',
       UPDATE_NOT_SAME_LOCATION:
         'You can only update the user within the same location',
     },

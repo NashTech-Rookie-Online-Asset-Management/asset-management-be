@@ -22,6 +22,9 @@ export class RolesGuard implements CanActivate {
       return true;
     }
     const { user } = context.switchToHttp().getRequest();
+    if (user.type === AccountType.ROOT) {
+      return true;
+    }
     if (user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException(Messages.AUTH.FAILED.INACTIVE);
     }

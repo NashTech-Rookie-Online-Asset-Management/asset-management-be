@@ -88,11 +88,11 @@ describe('UsersController', () => {
 
       mockUsersService.create.mockResolvedValue(result);
 
-      expect(await controller.create(Location.HCM, createUserDto)).toEqual(
+      expect(await controller.create(adminMockup, createUserDto)).toEqual(
         result,
       );
       expect(usersService.create).toHaveBeenCalledWith(
-        Location.HCM,
+        adminMockup,
         createUserDto,
       );
     });
@@ -113,10 +113,10 @@ describe('UsersController', () => {
       );
 
       await expect(
-        controller.create(Location.HCM, createUserDto),
+        controller.create(adminMockup, createUserDto),
       ).rejects.toThrow('Failed to create user');
       expect(usersService.create).toHaveBeenCalledWith(
-        Location.HCM,
+        adminMockup,
         createUserDto,
       );
     });

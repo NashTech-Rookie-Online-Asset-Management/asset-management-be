@@ -6,6 +6,7 @@ import { CreateUserDto, UpdateUserDto } from './dto';
 import {
   AccountType,
   AssignmentState,
+  Gender,
   Location,
   RequestState,
   UserStatus,
@@ -59,26 +60,26 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
-    const adminLocation = Location.HCM;
     const createUserDto: CreateUserDto = {
       firstName: 'John',
       lastName: 'Doe',
       dob: new Date('1990-01-01'),
       joinedAt: new Date('2024-06-17'),
       gender: 'MALE',
-      type: 'ADMIN',
+      type: 'STAFF',
       location: Location.HCM,
     };
 
     const mockedCreateReturnValue = {
-      staffCode: 'SD0001',
+      staffCode: 'SD0002',
       firstName: 'John',
       lastName: 'Doe',
       username: 'johnd',
       gender: 'MALE',
       dob: new Date('2024-06-17'),
       joinedAt: new Date('2024-06-17'),
-      type: 'ADMIN',
+      type: 'STAFF',
+      location: Location.HCM,
     };
     it('should create a user successfully', async () => {
       (mockPrismaService.account.count as jest.Mock).mockResolvedValue(0);
@@ -87,7 +88,7 @@ describe('UsersService', () => {
       );
       jest.spyOn(bcrypt, 'hash').mockResolvedValue('hashedpassword' as never);
 
-      const result = await service.create(adminLocation, createUserDto);
+      const result = await service.create(adminMockup, createUserDto);
 
       expect(result).toEqual(mockedCreateReturnValue);
       expect(mockPrismaService.account.count).toHaveBeenCalled();
@@ -98,11 +99,11 @@ describe('UsersService', () => {
           lastName: 'Doe',
           dob: new Date('1990-01-01'),
           joinedAt: new Date('2024-06-17'),
-          gender: 'MALE',
-          type: 'ADMIN',
+          gender: Gender.MALE,
+          type: AccountType.STAFF,
           username: 'johnd',
           password: 'hashedpassword',
-          location: 'HCM',
+          location: Location.HCM,
         },
         select: {
           staffCode: true,
@@ -112,6 +113,8 @@ describe('UsersService', () => {
           lastName: true,
           username: true,
           joinedAt: true,
+          location: true,
+          password: true,
           type: true,
         },
       });
@@ -123,9 +126,9 @@ describe('UsersService', () => {
         new Error('Failed to create user'),
       );
 
-      await expect(
-        service.create(adminLocation, createUserDto),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.create(adminMockup, createUserDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

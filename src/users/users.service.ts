@@ -24,11 +24,22 @@ import { UserType } from './types';
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
-  async create(adminLocation: Location, createUserDto: CreateUserDto) {
+  async create(admin: UserType, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
     const dob = new Date(createUserDto.dob);
     const joinedAt = new Date(createUserDto.joinedAt);
-    const userLocation = location ? location : adminLocation;
+
+    if (!Object.values(Location).includes(admin.location)) {
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    }
+
+    if (admin.type === createUserDto.type) {
+      throw new BadRequestException(Messages.USER.FAILED.CREATE_SAME_TYPE);
+    }
+    const userLocation =
+      admin.type === AccountType.ADMIN
+        ? admin.location
+        : location || admin.location;
 
     //generate staffCode
     const usersCount = await this.prismaService.account.count();
@@ -40,7 +51,7 @@ export class UsersService {
     //hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     try {
-      return await this.prismaService.account.create({
+      const userCreated = await this.prismaService.account.create({
         data: {
           staffCode,
           firstName,
@@ -61,9 +72,13 @@ export class UsersService {
           lastName: true,
           username: true,
           joinedAt: true,
+          location: true,
+          password: true,
           type: true,
         },
       });
+      userCreated.password = password;
+      return userCreated;
     } catch (error) {
       throw new BadRequestException(Messages.USER.FAILED.CREATE);
     }
