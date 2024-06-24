@@ -341,29 +341,11 @@ export class UsersService {
     });
   }
 
-  async disable(userStaffCode: string) {
+  async disable(admin: UserType, userStaffCode: string) {
     const userExisted = await this.prismaService.account.findUnique({
       where: { staffCode: userStaffCode },
       include: {
         assignedTos: {
-          where: {
-            state: {
-              in: [
-                AssignmentState.WAITING_FOR_ACCEPTANCE,
-                AssignmentState.ACCEPTED,
-                AssignmentState.IS_REQUESTED,
-              ],
-            },
-          },
-          include: {
-            returningRequest: {
-              where: {
-                state: RequestState.WAITING_FOR_RETURNING,
-              },
-            },
-          },
-        },
-        assignedBys: {
           where: {
             state: {
               in: [
@@ -387,7 +369,31 @@ export class UsersService {
     if (!userExisted) {
       throw new BadRequestException(Messages.USER.FAILED.NOT_FOUND);
     }
+    if (
+      admin.type === AccountType.ADMIN &&
+      admin.location !== userExisted.location
+    ) {
+      throw new BadRequestException(
+        Messages.USER.FAILED.DISABLED_NOT_SAME_LOCATION,
+      );
+    }
+    if (admin.id === userExisted.id) {
+      throw new BadRequestException(Messages.USER.FAILED.DISABLE_OWN_ACCOUNT);
+    }
+    if (admin.type === userExisted.type) {
+      throw new BadRequestException(Messages.USER.FAILED.DISABLE_SAME_TYPE);
+    }
 
+    if (userExisted.status === UserStatus.DISABLED) {
+      throw new BadRequestException(Messages.USER.FAILED.DISABLED_ALREADY);
+    }
+
+    if (
+      admin.type === AccountType.ADMIN &&
+      userExisted.type === AccountType.ROOT
+    ) {
+      throw new BadRequestException(Messages.USER.FAILED.DISABLED_ROOT);
+    }
     const hasValidAssignments = userExisted.assignedTos.some(
       (assignment) =>
         (

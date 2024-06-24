@@ -22,18 +22,16 @@ import { User } from 'src/common/decorators/user.decorator';
 import { UserType } from './types';
 @Controller('users')
 @ApiTags('USERS')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(AccountType.ROOT, AccountType.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(AccountType.ADMIN)
   @Post()
   create(@User() admin: UserType, @Body() createUserDto: CreateUserDto) {
     return this.usersService.create(admin, createUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(AccountType.ADMIN)
   @Patch(':staffCode')
   update(
     @User() admin: UserType,
@@ -43,8 +41,6 @@ export class UsersController {
     return this.usersService.update(admin, userStaffCode, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
   @Get()
   async getUsers(
     @GetUser('username') username: string,
@@ -54,17 +50,16 @@ export class UsersController {
     return this.usersService.selectMany(username, location, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
   @Get(':username')
   async getUser(@Param('username') username: string) {
     return this.usersService.selectOne(username);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN)
   @Delete(':staffCode')
-  async disabledUser(@Param('staffCode') userStaffCode: string) {
-    return this.usersService.disable(userStaffCode);
+  async disabledUser(
+    @User() admin: UserType,
+    @Param('staffCode') userStaffCode: string,
+  ) {
+    return this.usersService.disable(admin, userStaffCode);
   }
 }

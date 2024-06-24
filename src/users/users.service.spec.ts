@@ -474,13 +474,14 @@ describe('UsersService', () => {
 
   describe('disable', () => {
     it('should disable a user successfully', async () => {
-      const userStaffCode = 'SD0001';
+      const userStaffCode = 'SD0002';
 
       // Mock the return value of PrismaService methods for findUnique and update
       const mockUser = {
         staffCode: userStaffCode,
         assignedTos: [],
         assignedBys: [],
+        location: Location.HCM,
       };
       (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
         mockUser,
@@ -490,31 +491,13 @@ describe('UsersService', () => {
         status: UserStatus.DISABLED,
       });
 
-      const result = await service.disable(userStaffCode);
+      const result = await service.disable(adminMockup, userStaffCode);
 
       expect(result.status).toEqual(UserStatus.DISABLED);
       expect(mockPrismaService.account.findUnique).toHaveBeenCalledWith({
         where: { staffCode: userStaffCode },
         include: {
           assignedTos: {
-            where: {
-              state: {
-                in: [
-                  AssignmentState.WAITING_FOR_ACCEPTANCE,
-                  AssignmentState.ACCEPTED,
-                  AssignmentState.IS_REQUESTED,
-                ],
-              },
-            },
-            include: {
-              returningRequest: {
-                where: {
-                  state: RequestState.WAITING_FOR_RETURNING,
-                },
-              },
-            },
-          },
-          assignedBys: {
             where: {
               state: {
                 in: [
@@ -548,19 +531,19 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException if user is not found', async () => {
-      const userStaffCode = 'SD0001';
+      const userStaffCode = 'SD0002';
 
       (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
         null,
       );
 
-      await expect(service.disable(userStaffCode)).rejects.toThrow(
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
         BadRequestException,
       );
     });
 
     it('should throw BadRequestException if user has valid assignments', async () => {
-      const userStaffCode = 'SD0001';
+      const userStaffCode = 'SD0002';
 
       const mockUser = {
         staffCode: userStaffCode,
@@ -572,7 +555,7 @@ describe('UsersService', () => {
         mockUser,
       );
 
-      await expect(service.disable(userStaffCode)).rejects.toThrow(
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
         BadRequestException,
       );
     });

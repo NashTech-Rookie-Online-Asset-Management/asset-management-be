@@ -45,9 +45,14 @@ export const Messages = {
       JOINED_DATE_INVALID: 'Invalid joined date',
       DISABLED_FAILED:
         'There are valid assignments belonging to this user. Please close all assignments before disabling user.',
+      DISABLED_NOT_SAME_LOCATION: 'User is not in the same location',
       UPDATE_SELF: 'You can not update your own account',
       UPDATE_SAME_TYPE: 'You can not update to the same account type',
       CREATE_SAME_TYPE: 'You can not create the same account type',
+      DISABLE_SAME_TYPE: 'You can not disable the same account type',
+      DISABLE_OWN_ACCOUNT: 'You can not disable the your own account',
+      DISABLED_ROOT: 'You can not disable the root account',
+      DISABLED_ALREADY: 'User is already disabled',
       UPDATE_NOT_SAME_LOCATION:
         'You can only update the user within the same location',
     },
