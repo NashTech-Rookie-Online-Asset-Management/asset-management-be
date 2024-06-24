@@ -69,12 +69,19 @@ export class UserPageOptions {
   @IsOptional()
   readonly typeOrder?: Order | undefined;
 
+  @ApiPropertyOptional({
+    enum: Order,
+  })
+  @IsEnum(Order)
+  @IsOptional()
+  readonly updatedAtOrder?: Order | undefined;
+
   // Filter
   @ApiPropertyOptional()
-  @IsArray()
-  @IsEnum(AccountType, { each: true })
   @IsOptional()
+  @IsArray()
   @ArrayNotEmpty()
+  @IsEnum(AccountType, { each: true })
   @Transform(({ value }) => value.trim().split(','))
   readonly types?: AccountType[] = [AccountType.ADMIN, AccountType.STAFF];
 }

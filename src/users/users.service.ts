@@ -284,6 +284,9 @@ export class UsersService {
         {
           type: dto.typeOrder,
         },
+        {
+          updatedAt: dto.updatedAtOrder,
+        },
       ],
     };
 
