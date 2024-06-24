@@ -54,12 +54,12 @@ export class AssignmentService {
           note: dto.note,
           assignedTo: {
             connect: {
-              id: createdUser.id,
+              staffCode: dto.staffCode,
             },
           },
           assignedBy: {
             connect: {
-              staffCode: dto.staffCode,
+              id: createdUser.id,
             },
           },
           asset: {
