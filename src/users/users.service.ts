@@ -1,4 +1,8 @@
-import * as bcrypt from 'bcryptjs';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   Account,
   AccountType,
@@ -7,19 +11,15 @@ import {
   RequestState,
   UserStatus,
 } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import { Messages } from 'src/common/constants';
 import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { PrismaService } from './../prisma/prisma.service';
-import { CreateUserDto, UpdateUserDto, UserPageOptions } from './dto';
-import {
-  formatFirstName,
   formatDate,
+  formatFirstName,
   isAtLeast18YearsAfter,
 } from '../common/utils';
-import { Messages } from 'src/common/constants';
+import { PrismaService } from './../prisma/prisma.service';
+import { CreateUserDto, UpdateUserDto, UserPageOptions } from './dto';
 import { UserType } from './types';
 @Injectable()
 export class UsersService {
@@ -241,6 +241,9 @@ export class UsersService {
         username: {
           not: username,
         },
+        status: {
+          not: UserStatus.DISABLED,
+        },
         ...(dto.search &&
           dto.search.length > 0 && {
             OR: [
@@ -300,14 +303,25 @@ export class UsersService {
         ...conditions,
         ...pageOptions,
 
-        select: {
-          id: true,
-          staffCode: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          joinedAt: true,
-          type: true,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
         },
       }),
       this.prismaService.account.count({
@@ -316,7 +330,28 @@ export class UsersService {
     ]);
 
     return {
-      data: users,
+      data: users.map((user) => ({
+        id: user.id,
+        staffCode: user.staffCode,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        username: user.username,
+        joinedAt: user.joinedAt,
+        type: user.type,
+        canDisable: !user.assignedTos.some(
+          (assignment) =>
+            (
+              [
+                AssignmentState.WAITING_FOR_ACCEPTANCE,
+                AssignmentState.ACCEPTED,
+              ] as AssignmentState[]
+            ).includes(assignment.state) ||
+            (assignment.state === AssignmentState.IS_REQUESTED &&
+              assignment.returningRequest &&
+              assignment.returningRequest.state ===
+                RequestState.WAITING_FOR_RETURNING),
+        ),
+      })),
       pagination: {
         totalPages: Math.ceil(totalCount / dto.take),
         totalCount,
