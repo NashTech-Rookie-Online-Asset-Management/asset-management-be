@@ -228,23 +228,32 @@ describe('UsersController', () => {
   });
 
   describe('getUser', () => {
+    const user = {
+      id: 1,
+      staffCode: 'SD0001',
+      username: 'nicolad',
+      status: UserStatus.ACTIVE,
+      type: AccountType.ADMIN,
+      location: Location.HCM,
+    };
     it('should return a user successfully', async () => {
       const username = 'johnd';
 
       const result = {
+        id: '1',
         staffCode: 'SD0001',
         firstName: 'John',
         lastName: 'Doe',
         username: 'johnd',
         joinedAt: new Date('2024-06-17'),
-        type: 'ADMIN',
+        type: AccountType.ADMIN,
         location: Location.HCM,
       };
 
       mockUsersService.selectOne.mockResolvedValue(result);
 
-      expect(await controller.getUser(username)).toEqual(result);
-      expect(usersService.selectOne).toHaveBeenCalledWith(username);
+      expect(await controller.getUser(username, user)).toEqual(result);
+      expect(usersService.selectOne).toHaveBeenCalledWith(username, user);
     });
 
     it('should throw an error if retrieving the user fails', async () => {
@@ -254,10 +263,10 @@ describe('UsersController', () => {
         new Error('Failed to retrieve user'),
       );
 
-      await expect(controller.getUser(username)).rejects.toThrow(
+      await expect(controller.getUser(username, user)).rejects.toThrow(
         'Failed to retrieve user',
       );
-      expect(usersService.selectOne).toHaveBeenCalledWith(username);
+      expect(usersService.selectOne).toHaveBeenCalledWith(username, user);
     });
   });
 

@@ -14,7 +14,7 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { RolesGuard } from '../common/guards/role.guard';
 import { GetUser, Roles } from '../common/decorators';
-import { AccountType } from '@prisma/client';
+import { Account, AccountType } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto, UserPageOptions } from './dto';
 import { Location } from '@prisma/client';
@@ -51,8 +51,11 @@ export class UsersController {
   }
 
   @Get(':username')
-  async getUser(@Param('username') username: string) {
-    return this.usersService.selectOne(username);
+  async getUser(
+    @Param('username') username: string,
+    @User() user: Partial<Account>,
+  ) {
+    return this.usersService.selectOne(username, user);
   }
 
   @Delete(':staffCode')

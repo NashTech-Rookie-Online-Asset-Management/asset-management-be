@@ -147,8 +147,20 @@ describe('UsersService', () => {
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
-        { id: 1, staffCode: 'SD0001', firstName: 'John', lastName: 'Doe' },
-        { id: 2, staffCode: 'SD0002', firstName: 'Jane', lastName: 'Smith' },
+        {
+          id: 1,
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'Doe',
+          assignedTos: [],
+        },
+        {
+          id: 2,
+          staffCode: 'SD0002',
+          firstName: 'Jane',
+          lastName: 'Smith',
+          assignedTos: [],
+        },
       ]);
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(10);
@@ -163,6 +175,9 @@ describe('UsersService', () => {
         where: {
           location,
           username: { not: username },
+          status: {
+            not: UserStatus.DISABLED,
+          },
         },
         orderBy: [
           {
@@ -183,14 +198,25 @@ describe('UsersService', () => {
         ],
         take: dto.take,
         skip: dto.skip,
-        select: {
-          id: true,
-          staffCode: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          joinedAt: true,
-          type: true,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
         },
       });
     });
@@ -206,7 +232,13 @@ describe('UsersService', () => {
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
-        { id: 1, staffCode: 'SD0001', firstName: 'John', lastName: 'DOE' },
+        {
+          id: 1,
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'DOE',
+          assignedTos: [],
+        },
       ]);
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
@@ -218,6 +250,9 @@ describe('UsersService', () => {
         where: {
           location,
           username: { not: username },
+          status: {
+            not: UserStatus.DISABLED,
+          },
           OR: [
             { firstName: { contains: dto.search, mode: 'insensitive' } },
             { lastName: { contains: dto.search, mode: 'insensitive' } },
@@ -243,14 +278,25 @@ describe('UsersService', () => {
         ],
         take: dto.take,
         skip: dto.skip,
-        select: {
-          id: true,
-          staffCode: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          joinedAt: true,
-          type: true,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
         },
       });
     });
@@ -272,6 +318,7 @@ describe('UsersService', () => {
           firstName: 'John',
           lastName: 'DOE',
           updatedAt: undefined,
+          assignedTos: [],
         },
       ]);
 
@@ -284,6 +331,9 @@ describe('UsersService', () => {
         where: {
           location,
           username: { not: username },
+          status: {
+            not: UserStatus.DISABLED,
+          },
           type: {
             in: dto.types,
           },
@@ -307,40 +357,61 @@ describe('UsersService', () => {
         ],
         take: dto.take,
         skip: dto.skip,
-        select: {
-          id: true,
-          staffCode: true,
-          firstName: true,
-          lastName: true,
-          username: true,
-          joinedAt: true,
-          type: true,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
         },
       });
     });
   });
 
   describe('getUser', () => {
+    const user = {
+      id: 1,
+      staffCode: 'SD0001',
+      username: 'nicolad',
+      status: UserStatus.ACTIVE,
+      type: AccountType.ADMIN,
+      location: Location.HCM,
+    };
     it('should get user', async () => {
       const username = 'test_user';
       const expected = {
-        id: 1,
+        id: 2,
         staffCode: 'SD0001',
         firstName: 'John',
         lastName: 'Doe',
         username: username,
+        location: Location.HCM,
       };
 
       (mockPrismaService.account.findFirst as jest.Mock).mockResolvedValueOnce(
         expected,
       );
 
-      const result = await service.selectOne(username);
+      const result = await service.selectOne(username, user);
 
       expect(result).toEqual(expected);
       expect(mockPrismaService.account.findFirst).toHaveBeenCalledWith({
         where: { username },
         select: {
+          id: true,
           staffCode: true,
           firstName: true,
           lastName: true,
@@ -350,6 +421,9 @@ describe('UsersService', () => {
           joinedAt: true,
           type: true,
           location: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
         },
       });
     });
@@ -576,6 +650,251 @@ describe('UsersService', () => {
       await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('getUsers', () => {
+    it('should find users by location with pagination and sorting', async () => {
+      const username = 'test_user';
+      const location = Location.HCM;
+      const dto = {
+        take: 10,
+        skip: 0,
+        staffCodeOrder: undefined,
+        nameOrder: undefined,
+        joinedDateOrder: undefined,
+        typeOrder: Order.ASC,
+      };
+
+      (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
+        {
+          id: 1,
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'Doe',
+          assignedTos: [],
+        },
+        {
+          id: 2,
+          staffCode: 'SD0002',
+          firstName: 'Jane',
+          lastName: 'Smith',
+          assignedTos: [],
+        },
+      ]);
+
+      (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(10);
+
+      const result = await service.selectMany(username, location, dto);
+
+      expect(result.data.length).toBe(2);
+      expect(result.pagination.totalPages).toBe(1);
+      expect(result.pagination.totalCount).toBe(10);
+
+      expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
+        where: {
+          location,
+          username: { not: username },
+          status: {
+            not: UserStatus.DISABLED,
+          },
+        },
+        orderBy: [
+          {
+            staffCode: dto.staffCodeOrder,
+          },
+          {
+            firstName: dto.nameOrder,
+          },
+          {
+            joinedAt: dto.joinedDateOrder,
+          },
+          {
+            type: dto.typeOrder,
+          },
+          {
+            updatedAt: undefined,
+          },
+        ],
+        take: dto.take,
+        skip: dto.skip,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it('should search users by name and staffCode (case-insensitive)', async () => {
+      const username = 'test_user';
+      const location = Location.HCM;
+      const dto = {
+        take: 10,
+        skip: 0,
+        search: 'doe',
+      };
+
+      (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
+        {
+          id: 1,
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'DOE',
+          assignedTos: [],
+        },
+      ]);
+
+      (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
+
+      const result = await service.selectMany(username, location, dto);
+
+      expect(result.data.length).toBe(1);
+      expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
+        where: {
+          location,
+          username: { not: username },
+          status: {
+            not: UserStatus.DISABLED,
+          },
+          OR: [
+            { firstName: { contains: dto.search, mode: 'insensitive' } },
+            { lastName: { contains: dto.search, mode: 'insensitive' } },
+            { staffCode: { contains: dto.search, mode: 'insensitive' } },
+          ],
+        },
+        orderBy: [
+          {
+            staffCode: undefined,
+          },
+          {
+            firstName: undefined,
+          },
+          {
+            joinedAt: undefined,
+          },
+          {
+            type: undefined,
+          },
+          {
+            updatedAt: undefined,
+          },
+        ],
+        take: dto.take,
+        skip: dto.skip,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it('should filter users by types', async () => {
+      const username = 'test_user';
+      const location = Location.HCM;
+      const dto = {
+        take: 10,
+        skip: 0,
+        types: [AccountType.STAFF],
+      };
+
+      (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
+        {
+          id: 1,
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'DOE',
+          assignedTos: [],
+        },
+      ]);
+
+      (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
+
+      const result = await service.selectMany(username, location, dto);
+
+      expect(result.data.length).toBe(1);
+      expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
+        where: {
+          location,
+          username: { not: username },
+          status: {
+            not: UserStatus.DISABLED,
+          },
+          type: {
+            in: dto.types,
+          },
+        },
+        orderBy: [
+          {
+            staffCode: undefined,
+          },
+          {
+            firstName: undefined,
+          },
+          {
+            joinedAt: undefined,
+          },
+          {
+            type: undefined,
+          },
+          {
+            updatedAt: undefined,
+          },
+        ],
+        take: dto.take,
+        skip: dto.skip,
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+        },
+      });
     });
   });
 });

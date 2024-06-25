@@ -31,7 +31,7 @@ export const Messages = {
     },
     FAILED: {
       DISABLED: 'This account is disabled',
-      NOT_FOUND: 'User not found',
+      NOT_FOUND: 'User is not found',
       CREATE: 'Failed to create user',
       UPDATE: 'Failed to update user',
       DELETE: 'Failed to delete user',
@@ -55,6 +55,11 @@ export const Messages = {
       DISABLED_ALREADY: 'User is already disabled',
       UPDATE_NOT_SAME_LOCATION:
         'You can only update the user within the same location',
+      VIEW_NOT_SAME_LOCATION:
+        'This user does not have the same location as yours',
+      VIEW_NOT_HAVE_RIGHT:
+        'You do not have enough permission to view this user.',
+      VIEW_SELF: 'You are not allowed to view yourself currently',
     },
     VALIDATE: {
       DOB: 'Date of Birth is required',

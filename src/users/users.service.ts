@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import {
@@ -359,21 +361,44 @@ export class UsersService {
     };
   }
 
-  async selectOne(username: string): Promise<Partial<Account>> {
-    return this.prismaService.account.findFirst({
-      where: { username },
+  async selectOne(
+    username: string,
+    liveUser: Partial<Account>,
+  ): Promise<Partial<Account>> {
+    const user = await this.prismaService.account.findFirst({
+      where: {
+        username,
+      },
       select: {
+        id: true,
         staffCode: true,
         firstName: true,
         lastName: true,
-        username: true,
         dob: true,
         gender: true,
-        joinedAt: true,
         type: true,
+        joinedAt: true,
+        username: true,
         location: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
+    if (!user) {
+      throw new NotFoundException(Messages.USER.FAILED.NOT_FOUND);
+    }
+    if (user.location !== liveUser.location) {
+      throw new ForbiddenException(Messages.USER.FAILED.VIEW_NOT_SAME_LOCATION);
+    }
+    if (user.status === UserStatus.DISABLED) {
+      throw new ForbiddenException(Messages.USER.FAILED.DISABLED);
+    }
+    if (user.id === liveUser.id) {
+      throw new ForbiddenException(Messages.USER.FAILED.VIEW_SELF);
+    }
+
+    return user;
   }
 
   async disable(admin: UserType, userStaffCode: string) {
