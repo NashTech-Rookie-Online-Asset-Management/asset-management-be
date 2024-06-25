@@ -40,6 +40,7 @@ export class AssetPageOptions {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => value.trim())
   readonly search?: string;
 
   // Sort
