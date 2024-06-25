@@ -45,12 +45,16 @@ export class AssetPageOptions {
 
   // Sort
   @ApiPropertyOptional({
-    enum: ['assetCode', 'name', 'category', 'state'],
+    enum: ['assetCode', 'name', 'category', 'state', 'updatedAt'],
   })
-  @IsEnum(['assetCode', 'name', 'category', 'state'])
+  @IsEnum(['assetCode', 'name', 'category', 'state', 'updatedAt'])
   @IsOptional()
-  readonly sortField?: 'assetCode' | 'name' | 'category' | 'state' =
-    'assetCode';
+  readonly sortField?:
+    | 'assetCode'
+    | 'name'
+    | 'category'
+    | 'state'
+    | 'updatedAt' = 'assetCode';
 
   @ApiPropertyOptional({
     enum: Order,
