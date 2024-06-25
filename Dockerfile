@@ -14,6 +14,8 @@ RUN npm run build
 
 RUN npm ci --only=production --ignore-scripts && npm cache clean --force
 
+RUN npx prisma generate
+
 FROM base as runner
 
 WORKDIR /app
