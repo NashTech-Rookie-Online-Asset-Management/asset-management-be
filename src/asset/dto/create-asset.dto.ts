@@ -4,13 +4,14 @@ import {
   IsDateString,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
+  Length,
 } from 'class-validator';
 import { Messages } from 'src/common/constants';
 
 export class CreateAssetDto {
   @ApiProperty()
+  @Length(2, 64)
   @IsNotEmpty({ message: Messages.ASSET.VALIDATE.NAME })
   name: string;
 
@@ -20,8 +21,9 @@ export class CreateAssetDto {
 
   @ApiProperty()
   @IsString()
-  @IsOptional()
-  specification?: string;
+  @IsNotEmpty({ message: Messages.ASSET.VALIDATE.SPECIFICATION })
+  @Length(5, 256)
+  specification: string;
 
   @ApiProperty()
   @IsNotEmpty({ message: Messages.ASSET.VALIDATE.INSTALLED_DATE })

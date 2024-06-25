@@ -98,6 +98,7 @@ export const Messages = {
       LOCATION: 'Location is required',
       LOCATION_INVALID: 'Invalid location',
       ASSET_STATE_INVALID: 'Invalid asset state',
+      NAME_LENGTH: 'Name must be between 2 and 64 characters',
     },
   },
   CATEGORY: {

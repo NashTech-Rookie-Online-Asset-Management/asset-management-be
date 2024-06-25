@@ -143,6 +143,7 @@ describe('UsersService', () => {
         nameOrder: undefined,
         joinedDateOrder: undefined,
         typeOrder: Order.ASC,
+        updateAt: Order.ASC,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
@@ -176,6 +177,9 @@ describe('UsersService', () => {
           {
             type: dto.typeOrder,
           },
+          {
+            updatedAt: undefined,
+          },
         ],
         take: dto.take,
         skip: dto.skip,
@@ -198,6 +202,7 @@ describe('UsersService', () => {
         take: 10,
         skip: 0,
         search: 'doe',
+        updatedAt: Order.ASC,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
@@ -232,6 +237,9 @@ describe('UsersService', () => {
           {
             type: undefined,
           },
+          {
+            updatedAt: undefined,
+          },
         ],
         take: dto.take,
         skip: dto.skip,
@@ -254,10 +262,17 @@ describe('UsersService', () => {
         take: 10,
         skip: 0,
         types: [AccountType.STAFF],
+        updatedAt: undefined,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
-        { id: 1, staffCode: 'SD0001', firstName: 'John', lastName: 'DOE' },
+        {
+          id: 1,
+          staffCode: 'SD0001',
+          firstName: 'John',
+          lastName: 'DOE',
+          updatedAt: undefined,
+        },
       ]);
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
@@ -285,6 +300,9 @@ describe('UsersService', () => {
           },
           {
             type: undefined,
+          },
+          {
+            updatedAt: undefined,
           },
         ],
         take: dto.take,

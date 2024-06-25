@@ -34,8 +34,8 @@ model Account {
 model Asset {
   id            Int          @id @default(autoincrement())
   assetCode     String       @unique
-  name          String
-  specification String
+  name          String       @db.VarChar(64)
+  specification String       @db.VarChar(256)
   installedDate DateTime
   categoryId    Int
   state         AssetState
@@ -48,7 +48,7 @@ model Asset {
 
 model Category {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String   @db.VarChar(24)
   prefix    String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -61,7 +61,7 @@ model Assignment {
   assignedToId     Int
   assignedById     Int
   assignedDate     DateTime          @default(now())
-  note             String
+  note             String            @db.VarChar(256)
   state            AssignmentState   @default(WAITING_FOR_ACCEPTANCE)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt

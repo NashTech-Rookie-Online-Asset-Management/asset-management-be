@@ -1,16 +1,24 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { AssetState } from '@prisma/client';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 import { Messages } from 'src/common/constants';
 
 export class UpdateAssetDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  @Length(2, 64)
   name?: string;
 
   @ApiPropertyOptional()
   @IsString()
+  @Length(5, 256)
   @IsOptional()
   specification?: string;
 
