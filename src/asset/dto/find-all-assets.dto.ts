@@ -73,7 +73,7 @@ export class AssetPageOptions {
   @Transform(({ value }) => value.trim().split(','))
   readonly states?: AssetState[] = [
     AssetState.AVAILABLE,
-    AssetState.UNAVAILABLE,
+    AssetState.NOT_AVAILABLE,
     AssetState.ASSIGNED,
   ];
 

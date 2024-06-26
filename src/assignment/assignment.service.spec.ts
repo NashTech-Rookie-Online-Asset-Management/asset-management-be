@@ -1,5 +1,4 @@
-import { PrismaService } from 'src/prisma/prisma.service';
-import { AssignmentService } from './assignment.service';
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   Account,
@@ -8,8 +7,9 @@ import {
   Gender,
   Location,
 } from '@prisma/client';
-import { BadRequestException } from '@nestjs/common';
 import { Messages } from 'src/common/constants';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { AssignmentService } from './assignment.service';
 
 const createdUser: Account = {
   id: 1,
@@ -224,7 +224,7 @@ describe('Assignment Service', () => {
     }
   });
 
-  it('Should not create assignment if asset is unavailable', async () => {
+  it('Should not create assignment if asset is not available', async () => {
     (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
       id: 2,
       location: Location.HCM,
@@ -232,7 +232,7 @@ describe('Assignment Service', () => {
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
       id: 1,
-      state: AssetState.UNAVAILABLE,
+      state: AssetState.NOT_AVAILABLE,
       location: Location.HCM,
     });
 

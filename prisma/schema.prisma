@@ -110,10 +110,10 @@ enum UserStatus {
 
 enum AssetState {
   AVAILABLE
-  UNAVAILABLE
   ASSIGNED
-  WAITING_FOR_RECYCLING
+  NOT_AVAILABLE
   RECYCLED
+  WAITING_FOR_RECYCLING
 }
 
 enum AssignmentState {
