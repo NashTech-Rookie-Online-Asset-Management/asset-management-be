@@ -768,6 +768,19 @@ describe('AssetService', () => {
       expect(prismaService.asset.update).toHaveBeenCalledWith({
         where: { id: existingAssetId },
         data: updateDto,
+        select: {
+          id: true,
+          assetCode: true,
+          name: true,
+          specification: true,
+          state: true,
+          category: {
+            select: {
+              name: true,
+              prefix: true,
+            },
+          },
+        },
       });
     });
   });

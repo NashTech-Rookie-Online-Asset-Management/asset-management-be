@@ -287,6 +287,19 @@ export class AssetService {
         data: {
           ...dto,
         },
+        select: {
+          id: true,
+          assetCode: true,
+          name: true,
+          specification: true,
+          state: true,
+          category: {
+            select: {
+              name: true,
+              prefix: true,
+            },
+          },
+        },
       });
     } catch (error) {
       throw new HttpException(
