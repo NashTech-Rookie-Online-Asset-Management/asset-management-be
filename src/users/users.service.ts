@@ -272,6 +272,37 @@ export class UsersService {
         break;
     }
 
+    const searchParts = dto.search?.split(' ');
+
+    const searchClause = {
+      OR: [],
+    };
+
+    searchParts?.forEach((part) => {
+      searchClause.OR.push(
+        {
+          firstName: {
+            contains: part,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          lastName: {
+            contains: part,
+            mode: 'insensitive' as const,
+          },
+        },
+      );
+      if (part.includes('SD')) {
+        searchClause.OR.push({
+          staffCode: {
+            contains: part,
+            mode: 'insensitive' as const,
+          },
+        });
+      }
+    });
+
     const conditions = {
       where: {
         location: location,
@@ -281,29 +312,7 @@ export class UsersService {
         status: {
           not: UserStatus.DISABLED,
         },
-        ...(dto.search &&
-          dto.search.length > 0 && {
-            OR: [
-              {
-                firstName: {
-                  contains: dto.search,
-                  mode: 'insensitive' as const,
-                },
-              },
-              {
-                lastName: {
-                  contains: dto.search,
-                  mode: 'insensitive' as const,
-                },
-              },
-              {
-                staffCode: {
-                  contains: dto.search,
-                  mode: 'insensitive' as const,
-                },
-              },
-            ],
-          }),
+        ...searchClause,
         ...(dto.types &&
           dto.types.length > 0 && {
             type: {

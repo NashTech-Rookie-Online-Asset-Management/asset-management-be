@@ -175,6 +175,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
+          OR: [],
         },
         orderBy: [
           {
@@ -240,7 +241,6 @@ describe('UsersService', () => {
           OR: [
             { firstName: { contains: dto.search, mode: 'insensitive' } },
             { lastName: { contains: dto.search, mode: 'insensitive' } },
-            { staffCode: { contains: dto.search, mode: 'insensitive' } },
           ],
         },
         orderBy: [],
@@ -301,6 +301,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
+          OR: [],
           type: {
             in: dto.types,
           },
@@ -649,6 +650,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
+          OR: [],
         },
         orderBy: [],
         take: dto.take,
@@ -710,7 +712,6 @@ describe('UsersService', () => {
           OR: [
             { firstName: { contains: dto.search, mode: 'insensitive' } },
             { lastName: { contains: dto.search, mode: 'insensitive' } },
-            { staffCode: { contains: dto.search, mode: 'insensitive' } },
           ],
         },
         orderBy: [],
@@ -770,6 +771,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
+          OR: [],
           type: {
             in: dto.types,
           },
