@@ -121,6 +121,7 @@ describe('AssetController', () => {
         state: AssetState.AVAILABLE,
       };
       const result = {
+        id: 1,
         name: 'Laptop HP Probook 450 G1',
         assetCode: 'L00001',
         specification: 'Intel Core i5, 8GB RAM, 256GB SSD',

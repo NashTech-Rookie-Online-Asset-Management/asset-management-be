@@ -217,6 +217,7 @@ export class AssetService {
           categoryId: createAssetDto.categoryId,
         },
         select: {
+          id: true,
           assetCode: true,
           name: true,
           specification: true,
