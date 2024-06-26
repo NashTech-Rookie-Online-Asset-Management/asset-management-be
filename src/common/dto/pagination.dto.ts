@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { MAX_PAGE_SIZE, Order } from 'src/common/constants';
 
@@ -26,6 +26,7 @@ export class PaginationDto {
   @ApiPropertyOptional()
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => value.trim())
   readonly search?: string = '';
 
   @ApiPropertyOptional({

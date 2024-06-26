@@ -8,7 +8,7 @@ import { AccountType, Location, UserStatus } from '@prisma/client';
 
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { UpdateUserDto, UserPageOptions } from './dto';
+import { UpdateUserDto, UserPaginationDto } from './dto';
 import { UserType } from './types';
 
 const adminMockup: UserType = {
@@ -181,7 +181,7 @@ describe('UsersController', () => {
     it('should return a list of users successfully', async () => {
       const username = 'admin';
       const location: Location = Location.HCM;
-      const dto: UserPageOptions = { page: 1, take: 10, skip: 1 };
+      const dto: UserPaginationDto = { page: 1, take: 10, skip: 1 };
 
       const result = [
         {
@@ -210,7 +210,7 @@ describe('UsersController', () => {
     it('should throw an error if retrieving users fails', async () => {
       const username = 'admin';
       const location: Location = Location.HCM;
-      const dto: UserPageOptions = { page: 1, take: 10, skip: 1 };
+      const dto: UserPaginationDto = { page: 1, take: 10, skip: 1 };
 
       mockUsersService.selectMany.mockRejectedValue(
         new Error('Failed to retrieve users'),

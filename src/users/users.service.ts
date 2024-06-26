@@ -21,7 +21,12 @@ import {
   isAtLeast18YearsAfter,
 } from '../common/utils';
 import { PrismaService } from './../prisma/prisma.service';
-import { CreateUserDto, UpdateUserDto, UserPageOptions } from './dto';
+import {
+  CreateUserDto,
+  FindAllUsersSortKey,
+  UpdateUserDto,
+  UserPaginationDto,
+} from './dto';
 import { UserType } from './types';
 @Injectable()
 export class UsersService {
@@ -236,7 +241,37 @@ export class UsersService {
     return `${username}@${formattedDOB}`;
   }
 
-  async selectMany(username: string, location: Location, dto: UserPageOptions) {
+  async selectMany(
+    username: string,
+    location: Location,
+    dto: UserPaginationDto,
+  ) {
+    const orderBy = [];
+    switch (dto.sortField) {
+      case FindAllUsersSortKey.FIRST_NAME:
+        orderBy.push({
+          firstName: dto.sortOrder,
+        });
+        break;
+      case FindAllUsersSortKey.STAFF_CODE:
+        orderBy.push({
+          staffCode: dto.sortOrder,
+        });
+        break;
+      case FindAllUsersSortKey.JOINDED_AT:
+        orderBy.push({
+          joinedAt: dto.sortOrder,
+        });
+        break;
+      case FindAllUsersSortKey.TYPE:
+        orderBy.push({
+          type: dto.sortOrder,
+        });
+        break;
+      default:
+        break;
+    }
+
     const conditions = {
       where: {
         location: location,
@@ -276,23 +311,7 @@ export class UsersService {
             },
           }),
       },
-      orderBy: [
-        {
-          staffCode: dto.staffCodeOrder,
-        },
-        {
-          firstName: dto.nameOrder,
-        },
-        {
-          joinedAt: dto.joinedDateOrder,
-        },
-        {
-          type: dto.typeOrder,
-        },
-        {
-          updatedAt: dto.updatedAtOrder,
-        },
-      ],
+      orderBy,
     };
 
     const pageOptions = {

@@ -16,7 +16,7 @@ import { RolesGuard } from '../common/guards/role.guard';
 import { GetUser, Roles } from '../common/decorators';
 import { Account, AccountType } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
-import { UpdateUserDto, UserPageOptions } from './dto';
+import { UpdateUserDto, UserPaginationDto } from './dto';
 import { Location } from '@prisma/client';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserType } from './types';
@@ -45,7 +45,7 @@ export class UsersController {
   async getUsers(
     @GetUser('username') username: string,
     @GetUser('location') location: Location,
-    @Query() dto: UserPageOptions,
+    @Query() dto: UserPaginationDto,
   ) {
     return this.usersService.selectMany(username, location, dto);
   }

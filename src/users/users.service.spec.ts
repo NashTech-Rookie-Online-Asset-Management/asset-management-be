@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, FindAllUsersSortKey, UpdateUserDto } from './dto';
 import {
   AccountType,
   AssignmentState,
@@ -139,11 +139,8 @@ describe('UsersService', () => {
       const dto = {
         take: 10,
         skip: 0,
-        staffCodeOrder: undefined,
-        nameOrder: undefined,
-        joinedDateOrder: undefined,
-        typeOrder: Order.ASC,
-        updateAt: Order.ASC,
+        sortField: FindAllUsersSortKey.FIRST_NAME,
+        sortOrder: Order.ASC,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
@@ -181,19 +178,7 @@ describe('UsersService', () => {
         },
         orderBy: [
           {
-            staffCode: dto.staffCodeOrder,
-          },
-          {
-            firstName: dto.nameOrder,
-          },
-          {
-            joinedAt: dto.joinedDateOrder,
-          },
-          {
-            type: dto.typeOrder,
-          },
-          {
-            updatedAt: undefined,
+            firstName: 'asc',
           },
         ],
         take: dto.take,
@@ -228,7 +213,6 @@ describe('UsersService', () => {
         take: 10,
         skip: 0,
         search: 'doe',
-        updatedAt: Order.ASC,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
@@ -259,23 +243,7 @@ describe('UsersService', () => {
             { staffCode: { contains: dto.search, mode: 'insensitive' } },
           ],
         },
-        orderBy: [
-          {
-            staffCode: undefined,
-          },
-          {
-            firstName: undefined,
-          },
-          {
-            joinedAt: undefined,
-          },
-          {
-            type: undefined,
-          },
-          {
-            updatedAt: undefined,
-          },
-        ],
+        orderBy: [],
         take: dto.take,
         skip: dto.skip,
         include: {
@@ -308,7 +276,6 @@ describe('UsersService', () => {
         take: 10,
         skip: 0,
         types: [AccountType.STAFF],
-        updatedAt: undefined,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
@@ -338,23 +305,7 @@ describe('UsersService', () => {
             in: dto.types,
           },
         },
-        orderBy: [
-          {
-            staffCode: undefined,
-          },
-          {
-            firstName: undefined,
-          },
-          {
-            joinedAt: undefined,
-          },
-          {
-            type: undefined,
-          },
-          {
-            updatedAt: undefined,
-          },
-        ],
+        orderBy: [],
         take: dto.take,
         skip: dto.skip,
         include: {
@@ -699,23 +650,7 @@ describe('UsersService', () => {
             not: UserStatus.DISABLED,
           },
         },
-        orderBy: [
-          {
-            staffCode: dto.staffCodeOrder,
-          },
-          {
-            firstName: dto.nameOrder,
-          },
-          {
-            joinedAt: dto.joinedDateOrder,
-          },
-          {
-            type: dto.typeOrder,
-          },
-          {
-            updatedAt: undefined,
-          },
-        ],
+        orderBy: [],
         take: dto.take,
         skip: dto.skip,
         include: {
@@ -778,23 +713,7 @@ describe('UsersService', () => {
             { staffCode: { contains: dto.search, mode: 'insensitive' } },
           ],
         },
-        orderBy: [
-          {
-            staffCode: undefined,
-          },
-          {
-            firstName: undefined,
-          },
-          {
-            joinedAt: undefined,
-          },
-          {
-            type: undefined,
-          },
-          {
-            updatedAt: undefined,
-          },
-        ],
+        orderBy: [],
         take: dto.take,
         skip: dto.skip,
         include: {
@@ -855,23 +774,7 @@ describe('UsersService', () => {
             in: dto.types,
           },
         },
-        orderBy: [
-          {
-            staffCode: undefined,
-          },
-          {
-            firstName: undefined,
-          },
-          {
-            joinedAt: undefined,
-          },
-          {
-            type: undefined,
-          },
-          {
-            updatedAt: undefined,
-          },
-        ],
+        orderBy: [],
         take: dto.take,
         skip: dto.skip,
         include: {
