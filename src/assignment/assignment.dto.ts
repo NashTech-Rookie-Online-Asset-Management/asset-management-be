@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  Length,
 } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
@@ -26,6 +27,7 @@ export class AssignmentDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional()
+  @Length(0, 255)
   note: string;
 }
 
