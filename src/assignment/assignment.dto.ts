@@ -1,12 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
-export class CreateAssignmentDto {
+export class AssignmentDto {
   @IsString()
   @IsNotEmpty()
   @ApiProperty()
@@ -25,4 +27,32 @@ export class CreateAssignmentDto {
   @IsOptional()
   @ApiPropertyOptional()
   note: string;
+}
+
+export enum UserSortKey {
+  STAFF_CODE = 'staffCode',
+  FULL_NAME = 'fullName',
+}
+
+export enum AssetSortKey {
+  ASSET_CODE = 'assetCode',
+  ASSET_NAME = 'name',
+}
+
+export class UserPaginationDto extends PaginationDto {
+  @IsEnum(UserSortKey)
+  @IsOptional()
+  @ApiPropertyOptional({
+    enum: UserSortKey,
+  })
+  readonly sortField: UserSortKey = UserSortKey.STAFF_CODE;
+}
+
+export class AssetPaginationDto extends PaginationDto {
+  @IsEnum(AssetSortKey)
+  @IsOptional()
+  @ApiPropertyOptional({
+    enum: AssetSortKey,
+  })
+  readonly sortField: AssetSortKey = AssetSortKey.ASSET_CODE;
 }

@@ -6,7 +6,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
-import { CreateAssignmentDto } from './assignment.dto';
+import {
+  AssetPaginationDto,
+  AssignmentDto,
+  UserPaginationDto,
+} from './assignment.dto';
+import { AssetService } from 'src/asset/asset.service';
 
 const mockUserResult = [
   { id: 1, name: 'John Doe', location: 'Jakarta' },
@@ -25,7 +30,7 @@ const mockCreateAssignmentResult = {
   assignedAt: new Date(),
 };
 
-const createAssignmentDto: CreateAssignmentDto = {
+const createAssignmentDto: AssignmentDto = {
   assetCode: 'AS001',
   staffCode: 'ST001',
   assignedDate: new Date().toLocaleString(),
@@ -58,6 +63,11 @@ describe('UsersController', () => {
     getAvailableUser: jest.fn(),
     getAvailableAsset: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
+  };
+
+  const mockAssetService = {
+    updateState: jest.fn(),
   };
 
   const mockJwtAuthGuard = {
@@ -77,6 +87,7 @@ describe('UsersController', () => {
       controllers: [AssignmentController],
       providers: [
         { provide: AssignmentService, useValue: mockAssignmentService },
+        { provide: AssetService, useValue: mockAssetService },
         Reflector,
       ],
     })
@@ -104,7 +115,9 @@ describe('UsersController', () => {
   it('Should get available user if user is admin', async () => {
     await createTestingModule(AccountType.ADMIN);
     mockAssignmentService.getAvailableUser.mockResolvedValue(mockUserResult);
-    expect(await controller.getAvailableUser(createdUser)).toBe(mockUserResult);
+    expect(
+      await controller.getAvailableUser(createdUser, new UserPaginationDto()),
+    ).toBe(mockUserResult);
     expect(mockAssignmentService.getAvailableUser).toHaveBeenCalled();
   });
 
@@ -113,7 +126,7 @@ describe('UsersController', () => {
     mockAssignmentService.getAvailableUser.mockResolvedValue(mockUserResult);
 
     try {
-      await controller.getAvailableUser(createdUser);
+      await controller.getAvailableUser(createdUser, new UserPaginationDto());
     } catch (error) {
       expect(error.status).toBe(401);
       expect(error.message).toBe('Unauthorized');
@@ -126,7 +139,7 @@ describe('UsersController', () => {
     mockAssignmentService.getAvailableUser.mockResolvedValue(mockUserResult);
 
     try {
-      await controller.getAvailableUser(createdUser);
+      await controller.getAvailableUser(createdUser, new UserPaginationDto());
     } catch (error) {
       expect(error.status).toBe(401);
       expect(error.message).toBe('Unauthorized');
@@ -137,9 +150,9 @@ describe('UsersController', () => {
   it('Should get available asset if user is admin', async () => {
     await createTestingModule(AccountType.ADMIN);
     mockAssignmentService.getAvailableAsset.mockResolvedValue(mockAssetResult);
-    expect(await controller.getAvailableAsset(createdUser)).toBe(
-      mockAssetResult,
-    );
+    expect(
+      await controller.getAvailableAsset(createdUser, new AssetPaginationDto()),
+    ).toBe(mockAssetResult);
     expect(mockAssignmentService.getAvailableAsset).toHaveBeenCalled();
   });
 
@@ -148,7 +161,7 @@ describe('UsersController', () => {
     mockAssignmentService.getAvailableAsset.mockResolvedValue(mockAssetResult);
 
     try {
-      await controller.getAvailableAsset(createdUser);
+      await controller.getAvailableAsset(createdUser, new AssetPaginationDto());
     } catch (error) {
       expect(error.status).toBe(401);
       expect(error.message).toBe('Unauthorized');
@@ -161,7 +174,7 @@ describe('UsersController', () => {
     mockAssignmentService.getAvailableAsset.mockResolvedValue(mockAssetResult);
 
     try {
-      await controller.getAvailableAsset(createdUser);
+      await controller.getAvailableAsset(createdUser, new AssetPaginationDto());
     } catch (error) {
       expect(error.status).toBe(401);
       expect(error.message).toBe('Unauthorized');
@@ -201,6 +214,41 @@ describe('UsersController', () => {
       expect(error.status).toBe(401);
       expect(error.message).toBe('Unauthorized');
       expect(mockAssignmentService.create).not.toHaveBeenCalled();
+    }
+  });
+
+  it('Should edit assignment if user is admin', async () => {
+    await createTestingModule(AccountType.ADMIN);
+    mockAssignmentService.update.mockResolvedValue(mockCreateAssignmentResult);
+
+    const result = await controller.update(createdUser, 1, createAssignmentDto);
+    expect(result).toBe(mockCreateAssignmentResult);
+    expect(mockAssignmentService.update).toHaveBeenCalled();
+  });
+
+  it('Should not edit assignment if user is not admin', async () => {
+    await createTestingModule(AccountType.STAFF);
+    mockAssignmentService.update.mockResolvedValue(mockCreateAssignmentResult);
+
+    try {
+      await controller.update(createdUser, 1, createAssignmentDto);
+    } catch (error) {
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Unauthorized');
+      expect(mockAssignmentService.update).not.toHaveBeenCalled();
+    }
+  });
+
+  it('Should not edit assignment if user is root', async () => {
+    await createTestingModule(AccountType.ROOT);
+    mockAssignmentService.update.mockResolvedValue(mockCreateAssignmentResult);
+
+    try {
+      await controller.update(createdUser, 1, createAssignmentDto);
+    } catch (error) {
+      expect(error.status).toBe(401);
+      expect(error.message).toBe('Unauthorized');
+      expect(mockAssignmentService.update).not.toHaveBeenCalled();
     }
   });
 });

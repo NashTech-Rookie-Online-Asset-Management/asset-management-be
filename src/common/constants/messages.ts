@@ -138,6 +138,9 @@ export const Messages = {
       USER_NOT_IN_SAME_LOCATION: 'User is not in same location',
       ASSET_NOT_IN_SAME_LOCATION: 'Asset is not in same location',
       DATE_IN_THE_PAST: 'Date is in the past',
+      ASSIGNMENT_NOT_FOUND: 'Assignment not found',
+      ASSIGNMENT_ALREADY_CLOSED: 'Assignment is already closed',
+      ASSIGNMENT_NOT_YOURS: 'You do not have right to edit to this assignment',
     },
   },
 };

@@ -358,4 +358,15 @@ export class AssetService {
       throw new InternalServerErrorException(error.message);
     }
   }
+
+  public updateState(assetCode: string, state: AssetState) {
+    return this.prismaService.asset.update({
+      where: {
+        assetCode,
+      },
+      data: {
+        state,
+      },
+    });
+  }
 }
