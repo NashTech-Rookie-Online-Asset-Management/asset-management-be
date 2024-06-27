@@ -16,17 +16,18 @@ import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { User } from 'src/common/decorators/user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
 import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
 
 @Controller('assets')
 @ApiTags('ASSETS')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(AccountType.ADMIN, AccountType.ROOT)
 export class AssetController {
   constructor(private readonly assetService: AssetService) {}
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Get()
   getAssets(
     @GetUser('location') location: Location,
@@ -35,8 +36,6 @@ export class AssetController {
     return this.assetService.getAssets(location, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Get(':id')
   getAsset(
     @GetUser('location') location: Location,
@@ -45,8 +44,6 @@ export class AssetController {
     return this.assetService.getAsset(location, id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Post()
   createAsset(
     @GetUser('location') location: Location,
@@ -55,8 +52,6 @@ export class AssetController {
     return this.assetService.create(location, createAssetDto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Patch(':id')
   updateAsset(
     @User() admin: UserType,
@@ -66,8 +61,6 @@ export class AssetController {
     return this.assetService.update(admin, id, dto);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Roles(AccountType.ADMIN, AccountType.ROOT)
   @Delete(':id')
   deleteAsset(
     @GetUser('location') location: Location,
