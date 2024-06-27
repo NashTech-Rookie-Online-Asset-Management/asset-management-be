@@ -281,6 +281,15 @@ export class UsersService {
       OR: [],
     };
 
+    if (/\d+/.test(dto.search ?? '') == false && dto.search?.length > 0) {
+      searchClause.OR.push({
+        fullName: {
+          contains: dto.search,
+          mode: 'insensitive' as const,
+        },
+      });
+    }
+
     if (dto.search?.length <= 6) {
       searchClause.OR.push({
         staffCode: {
@@ -290,17 +299,14 @@ export class UsersService {
       });
     }
 
-    if (
-      /\d+/.test(dto.search ?? '') == false &&
-      dto.search?.length > 0 &&
-      dto.search?.length < 264
-    ) {
-      searchClause.OR.push({
-        fullName: {
-          contains: dto.search,
-          mode: 'insensitive' as const,
+    if (dto.search?.length >= 264) {
+      return {
+        data: [],
+        pagination: {
+          totalPages: 0,
+          totalCount: 0,
         },
-      });
+      };
     }
 
     const conditions = {

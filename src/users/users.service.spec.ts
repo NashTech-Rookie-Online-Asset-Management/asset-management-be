@@ -241,13 +241,13 @@ describe('UsersService', () => {
           },
           OR: [
             {
-              staffCode: {
+              fullName: {
                 contains: dto.search,
                 mode: 'insensitive',
               },
             },
             {
-              fullName: {
+              staffCode: {
                 contains: dto.search,
                 mode: 'insensitive',
               },
@@ -719,13 +719,13 @@ describe('UsersService', () => {
           },
           OR: [
             {
-              staffCode: {
+              fullName: {
                 contains: dto.search,
                 mode: 'insensitive',
               },
             },
             {
-              fullName: {
+              staffCode: {
                 contains: dto.search,
                 mode: 'insensitive',
               },
