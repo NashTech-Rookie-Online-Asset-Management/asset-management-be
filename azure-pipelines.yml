@@ -8,9 +8,7 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- main
 - staging
-- dev
 
 resources:
 - repo: self
@@ -49,5 +47,5 @@ stages:
       - task: AzureWebAppContainer@1
         inputs:
           azureSubscription: $(azureSubscription)
-          appName: asset-management-be
+          appName: asset-management-be-staging
           containers: minhledang/asset-management-be:latest
