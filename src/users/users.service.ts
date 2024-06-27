@@ -76,9 +76,10 @@ export class UsersService {
         select: {
           staffCode: true,
           firstName: true,
+          lastName: true,
+          fullName: true,
           dob: true,
           gender: true,
-          lastName: true,
           username: true,
           joinedAt: true,
           location: true,
@@ -150,9 +151,10 @@ export class UsersService {
         select: {
           staffCode: true,
           firstName: true,
+          lastName: true,
+          fullName: true,
           dob: true,
           gender: true,
-          lastName: true,
           username: true,
           joinedAt: true,
           type: true,

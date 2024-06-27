@@ -109,9 +109,10 @@ describe('UsersService', () => {
         select: {
           staffCode: true,
           firstName: true,
+          lastName: true,
+          fullName: true,
           dob: true,
           gender: true,
-          lastName: true,
           username: true,
           joinedAt: true,
           location: true,
@@ -434,9 +435,10 @@ describe('UsersService', () => {
         select: {
           staffCode: true,
           firstName: true,
+          lastName: true,
+          fullName: true,
           dob: true,
           gender: true,
-          lastName: true,
           username: true,
           joinedAt: true,
           type: true,
