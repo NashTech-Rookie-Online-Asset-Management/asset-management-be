@@ -28,7 +28,7 @@ export class AssignmentDto {
   @IsString()
   @IsOptional()
   @ApiPropertyOptional()
-  @Length(0, 255)
+  @Length(0, 256)
   note: string;
 }
 
