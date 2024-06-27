@@ -176,7 +176,6 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
         },
         orderBy: [
           {
@@ -306,7 +305,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
+
           type: {
             in: dto.types,
           },
@@ -652,7 +651,6 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
         },
         orderBy: [],
         take: dto.take,
@@ -777,7 +775,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
+
           type: {
             in: dto.types,
           },
