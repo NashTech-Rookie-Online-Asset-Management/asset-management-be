@@ -31,6 +31,7 @@ import { UserType } from './types';
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
+
   async create(admin: UserType, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
     const fullName = `${firstName} ${lastName}`;
@@ -280,7 +281,7 @@ export class UsersService {
       OR: [],
     };
 
-    if (dto.search?.includes('SD')) {
+    if (dto.search?.length <= 6) {
       searchClause.OR.push({
         staffCode: {
           contains: dto.search,
@@ -289,7 +290,11 @@ export class UsersService {
       });
     }
 
-    if (/SD\d+/.test(dto.search ?? '') == false && dto.search?.length > 0) {
+    if (
+      /\d+/.test(dto.search ?? '') == false &&
+      dto.search?.length > 0 &&
+      dto.search?.length < 264
+    ) {
       searchClause.OR.push({
         fullName: {
           contains: dto.search,

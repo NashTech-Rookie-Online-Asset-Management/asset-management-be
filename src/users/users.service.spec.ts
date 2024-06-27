@@ -241,6 +241,12 @@ describe('UsersService', () => {
           },
           OR: [
             {
+              staffCode: {
+                contains: dto.search,
+                mode: 'insensitive',
+              },
+            },
+            {
               fullName: {
                 contains: dto.search,
                 mode: 'insensitive',
@@ -712,6 +718,12 @@ describe('UsersService', () => {
             not: UserStatus.DISABLED,
           },
           OR: [
+            {
+              staffCode: {
+                contains: dto.search,
+                mode: 'insensitive',
+              },
+            },
             {
               fullName: {
                 contains: dto.search,
