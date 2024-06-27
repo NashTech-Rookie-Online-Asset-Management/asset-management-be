@@ -176,10 +176,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          fullName: {
-            contains: undefined,
-            mode: 'insensitive',
-          },
+          OR: [],
         },
         orderBy: [
           {
@@ -242,10 +239,14 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          fullName: {
-            contains: dto.search,
-            mode: 'insensitive',
-          },
+          OR: [
+            {
+              fullName: {
+                contains: dto.search,
+                mode: 'insensitive',
+              },
+            },
+          ],
         },
         orderBy: [],
         take: dto.take,
@@ -305,10 +306,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          fullName: {
-            contains: undefined,
-            mode: 'insensitive',
-          },
+          OR: [],
           type: {
             in: dto.types,
           },
@@ -620,10 +618,6 @@ describe('UsersService', () => {
       const dto = {
         take: 10,
         skip: 0,
-        staffCodeOrder: undefined,
-        nameOrder: undefined,
-        joinedDateOrder: undefined,
-        typeOrder: Order.ASC,
       };
 
       (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
@@ -658,10 +652,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          fullName: {
-            contains: undefined,
-            mode: 'insensitive',
-          },
+          OR: [],
         },
         orderBy: [],
         take: dto.take,
@@ -720,10 +711,14 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          fullName: {
-            contains: dto.search,
-            mode: 'insensitive',
-          },
+          OR: [
+            {
+              fullName: {
+                contains: dto.search,
+                mode: 'insensitive',
+              },
+            },
+          ],
         },
         orderBy: [],
         take: dto.take,
@@ -782,10 +777,7 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          fullName: {
-            contains: undefined,
-            mode: 'insensitive',
-          },
+          OR: [],
           type: {
             in: dto.types,
           },

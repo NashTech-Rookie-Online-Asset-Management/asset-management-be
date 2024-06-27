@@ -274,18 +274,37 @@ export class UsersService {
         break;
     }
 
+    const searchClause = {
+      OR: [],
+    };
+
+    if (dto.search?.includes('SD')) {
+      searchClause.OR.push({
+        staffCode: {
+          contains: dto.search,
+          mode: 'insensitive' as const,
+        },
+      });
+    }
+
+    if (/SD\d+/.test(dto.search ?? '') == false && dto.search?.length > 0) {
+      searchClause.OR.push({
+        fullName: {
+          contains: dto.search,
+          mode: 'insensitive' as const,
+        },
+      });
+    }
+
     const conditions = {
       where: {
         location: location,
         username: {
           not: username,
         },
+        ...searchClause,
         status: {
           not: UserStatus.DISABLED,
-        },
-        fullName: {
-          contains: dto.search,
-          mode: 'insensitive' as const,
         },
         ...(dto.types &&
           dto.types.length > 0 && {
