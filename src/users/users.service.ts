@@ -302,7 +302,7 @@ export class UsersService {
         username: {
           not: username,
         },
-        ...searchClause,
+        ...(searchClause.OR.length > 0 && searchClause),
         status: {
           not: UserStatus.DISABLED,
         },
