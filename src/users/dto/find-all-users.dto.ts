@@ -6,7 +6,7 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 export enum FindAllUsersSortKey {
   STAFF_CODE = 'staffCode',
-  FIRST_NAME = 'firstName',
+  FIRST_NAME = 'name',
   JOINDED_AT = 'joinedAt',
   TYPE = 'type',
 }
