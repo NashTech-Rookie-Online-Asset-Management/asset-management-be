@@ -4,6 +4,7 @@ import {
   AccountType,
   AssetState,
   AssignmentState,
+  UserStatus,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
@@ -83,6 +84,9 @@ export class AssignmentService {
         },
         {
           type: AccountType.ROOT,
+        },
+        {
+          status: UserStatus.DISABLED,
         },
       ],
     };
@@ -407,6 +411,11 @@ export class AssignmentService {
       throw new BadRequestException(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_IN_SAME_LOCATION,
       );
+    }
+
+    // Check if user is disable
+    if (assignedUser.status === UserStatus.DISABLED) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.USER_DISABLED);
     }
 
     // Check if assignment date is in the past

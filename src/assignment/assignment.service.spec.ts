@@ -347,6 +347,25 @@ describe('Assignment Service', () => {
     }
   });
 
+  it('Should not create assignment if assigned user is disable', async () => {
+    (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
+      ...assignedUser,
+      status: 'DISABLED',
+    });
+
+    (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
+      assginedAsset,
+    );
+
+    try {
+      await service.create(createdUser, assignmentDto);
+      fail('Should not reach here');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_DISABLED);
+    }
+  });
+
   it('Should not create assignment if user is not in the same location', async () => {
     (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
       ...assignedUser,
@@ -668,6 +687,29 @@ describe('Assignment Service', () => {
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_NOT_THE_SAME);
+    }
+  });
+
+  it('Should not edit assignment if updated user is disabled', async () => {
+    (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValueOnce(
+      assignment,
+    );
+
+    (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
+      ...assignedUser,
+      status: 'DISABLED',
+    });
+
+    (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
+      updatedAssignedAsset,
+    );
+
+    try {
+      await service.update(createdUser, 1, assignmentDto);
+      fail('Should not reach here');
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_DISABLED);
     }
   });
 

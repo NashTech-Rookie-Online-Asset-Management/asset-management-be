@@ -130,6 +130,7 @@ export const Messages = {
   ASSIGNMENT: {
     SUCCESS: {},
     FAILED: {
+      USER_DISABLED: 'User is disabled',
       USER_NOT_FOUND: 'User is not found',
       ASSET_NOT_FOUND: 'Asset is not found',
       ASSET_NOT_AVAILABLE: 'Asset is not available',
