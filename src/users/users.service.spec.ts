@@ -97,6 +97,7 @@ describe('UsersService', () => {
           staffCode: 'SD0001',
           firstName: 'John',
           lastName: 'Doe',
+          fullName: 'John Doe',
           dob: new Date('1990-01-01'),
           joinedAt: new Date('2024-06-17'),
           gender: Gender.MALE,
@@ -175,7 +176,10 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
+          fullName: {
+            contains: undefined,
+            mode: 'insensitive',
+          },
         },
         orderBy: [
           {
@@ -238,10 +242,10 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [
-            { firstName: { contains: dto.search, mode: 'insensitive' } },
-            { lastName: { contains: dto.search, mode: 'insensitive' } },
-          ],
+          fullName: {
+            contains: dto.search,
+            mode: 'insensitive',
+          },
         },
         orderBy: [],
         take: dto.take,
@@ -301,7 +305,10 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
+          fullName: {
+            contains: undefined,
+            mode: 'insensitive',
+          },
           type: {
             in: dto.types,
           },
@@ -367,6 +374,7 @@ describe('UsersService', () => {
           staffCode: true,
           firstName: true,
           lastName: true,
+          fullName: true,
           username: true,
           dob: true,
           gender: true,
@@ -650,7 +658,10 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
+          fullName: {
+            contains: undefined,
+            mode: 'insensitive',
+          },
         },
         orderBy: [],
         take: dto.take,
@@ -709,10 +720,10 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [
-            { firstName: { contains: dto.search, mode: 'insensitive' } },
-            { lastName: { contains: dto.search, mode: 'insensitive' } },
-          ],
+          fullName: {
+            contains: dto.search,
+            mode: 'insensitive',
+          },
         },
         orderBy: [],
         take: dto.take,
@@ -771,7 +782,10 @@ describe('UsersService', () => {
           status: {
             not: UserStatus.DISABLED,
           },
-          OR: [],
+          fullName: {
+            contains: undefined,
+            mode: 'insensitive',
+          },
           type: {
             in: dto.types,
           },

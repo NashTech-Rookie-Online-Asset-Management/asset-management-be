@@ -13,16 +13,19 @@ import {
 } from '../../common/decorators';
 import { ApiProperty } from '@nestjs/swagger';
 import { Messages } from 'src/common/constants';
+import { Transform } from 'class-transformer';
 
 export class CreateUserDto {
   @ApiProperty()
   @IsString()
   @IsValidName()
+  @Transform(({ value }) => value.trim())
   firstName: string;
 
   @ApiProperty()
   @IsString()
   @IsValidName()
+  @Transform(({ value }) => value.trim())
   lastName: string;
 
   @ApiProperty()

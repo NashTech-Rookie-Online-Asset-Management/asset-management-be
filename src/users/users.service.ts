@@ -33,6 +33,7 @@ export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(admin: UserType, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
+    const fullName = `${firstName} ${lastName}`;
     const dob = new Date(createUserDto.dob);
     const joinedAt = new Date(createUserDto.joinedAt);
 
@@ -63,6 +64,7 @@ export class UsersService {
           staffCode,
           firstName,
           lastName,
+          fullName,
           dob,
           joinedAt,
           gender,
@@ -272,37 +274,6 @@ export class UsersService {
         break;
     }
 
-    const searchParts = dto.search?.split(' ');
-
-    const searchClause = {
-      OR: [],
-    };
-
-    searchParts?.forEach((part) => {
-      searchClause.OR.push(
-        {
-          firstName: {
-            contains: part,
-            mode: 'insensitive' as const,
-          },
-        },
-        {
-          lastName: {
-            contains: part,
-            mode: 'insensitive' as const,
-          },
-        },
-      );
-      if (part.includes('SD')) {
-        searchClause.OR.push({
-          staffCode: {
-            contains: part,
-            mode: 'insensitive' as const,
-          },
-        });
-      }
-    });
-
     const conditions = {
       where: {
         location: location,
@@ -312,7 +283,10 @@ export class UsersService {
         status: {
           not: UserStatus.DISABLED,
         },
-        ...searchClause,
+        fullName: {
+          contains: dto.search,
+          mode: 'insensitive' as const,
+        },
         ...(dto.types &&
           dto.types.length > 0 && {
             type: {
@@ -365,6 +339,7 @@ export class UsersService {
         staffCode: user.staffCode,
         firstName: user.firstName,
         lastName: user.lastName,
+        fullName: user.fullName,
         username: user.username,
         joinedAt: user.joinedAt,
         type: user.type,
@@ -402,6 +377,7 @@ export class UsersService {
         staffCode: true,
         firstName: true,
         lastName: true,
+        fullName: true,
         dob: true,
         gender: true,
         type: true,

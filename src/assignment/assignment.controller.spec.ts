@@ -41,6 +41,7 @@ const createdUser: Account = {
   id: 1,
   firstName: 'John',
   lastName: 'Doe',
+  fullName: 'John Doe',
   gender: Gender.MALE,
   location: Location.HCM,
   password: '123456',

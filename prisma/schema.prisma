@@ -13,6 +13,7 @@ model Account {
   // NOTE: special character is not allowed in firstName and lastName
   firstName    String             @db.VarChar(128)
   lastName     String             @db.VarChar(128)
+  fullName     String             @db.VarChar(256)
   // NOTE: age must be older than 18 
   dob          DateTime
   gender       Gender?

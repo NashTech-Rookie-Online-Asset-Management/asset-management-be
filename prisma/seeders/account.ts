@@ -14,6 +14,7 @@ const prisma = new PrismaClient();
 export function createRandomAccount(): Prisma.AccountCreateInput {
   const firstName = faker.person.firstName();
   const lastName = faker.person.lastName();
+  const fullName = `${firstName} ${lastName}`;
   const username =
     firstName.toLowerCase() +
     lastName
@@ -24,6 +25,7 @@ export function createRandomAccount(): Prisma.AccountCreateInput {
   return {
     firstName,
     lastName,
+    fullName,
     username,
     staffCode: `SD${faker.string.numeric({
       length: 4,
