@@ -8,9 +8,9 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import {
   AssetPaginationDto,
+  AssetSortKey,
   AssignmentDto,
   UserPaginationDto,
-  UserSortKey,
 } from './assignment.dto';
 import { Messages } from 'src/common/constants';
 import { AssetService } from 'src/asset/asset.service';
@@ -22,7 +22,55 @@ export class AssignmentService {
     private readonly assetService: AssetService,
   ) {}
 
+  getAll(user: Account) {
+    return this.prismaService.assignment.findMany({
+      where: {
+        assignedBy: {
+          location: user.location,
+        },
+      },
+      include: {
+        assignedBy: {
+          select: {
+            staffCode: true,
+            fullName: true,
+            type: true,
+            location: true,
+          },
+        },
+        asset: {
+          select: {
+            assetCode: true,
+            name: true,
+            category: true,
+            location: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            staffCode: true,
+            fullName: true,
+            type: true,
+            location: true,
+          },
+        },
+      },
+    });
+  }
+
   async getAvailableUser(user: Account, pagination: UserPaginationDto) {
+    const assignmentId = pagination.assignmentId;
+
+    const assignment =
+      assignmentId &&
+      (await this.prismaService.assignment.findUnique({
+        where: {
+          id: Number.parseInt(assignmentId),
+        },
+      }));
+
+    const assignedTo = assignment?.assignedToId;
+
     const search = pagination.search.toLowerCase();
     const where = {
       location: user.location,
@@ -31,29 +79,13 @@ export class AssignmentService {
           id: user.id,
         },
         {
+          id: assignedTo,
+        },
+        {
           type: AccountType.ROOT,
         },
       ],
     };
-
-    const orderBy = [];
-    switch (pagination.sortField) {
-      case UserSortKey.STAFF_CODE:
-        orderBy.push({
-          staffCode: pagination.sortOrder,
-        });
-        break;
-      case UserSortKey.FULL_NAME:
-        orderBy.push({
-          firstName: pagination.sortOrder,
-        });
-        orderBy.push({
-          lastName: pagination.sortOrder,
-        });
-        break;
-      default:
-        break;
-    }
 
     const [count, data] = await Promise.all([
       this.prismaService.account.count({
@@ -61,13 +93,7 @@ export class AssignmentService {
           ...where,
           OR: [
             {
-              firstName: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              lastName: {
+              fullName: {
                 contains: search,
                 mode: 'insensitive',
               },
@@ -86,13 +112,7 @@ export class AssignmentService {
           ...where,
           OR: [
             {
-              firstName: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              lastName: {
+              fullName: {
                 contains: search,
                 mode: 'insensitive',
               },
@@ -105,11 +125,14 @@ export class AssignmentService {
             },
           ],
         },
-        orderBy,
+        orderBy: [
+          {
+            [pagination.sortField]: pagination.sortOrder,
+          },
+        ],
         select: {
           staffCode: true,
-          firstName: true,
-          lastName: true,
+          fullName: true,
           type: true,
           location: true,
         },
@@ -133,6 +156,22 @@ export class AssignmentService {
       state: AssetState.AVAILABLE,
       location: user.location,
     };
+
+    const orderBy = [];
+    switch (pagination.sortField) {
+      case AssetSortKey.ASSET_CATEGORY:
+        orderBy.push({
+          category: {
+            name: pagination.sortOrder,
+          },
+        });
+        break;
+      default:
+        orderBy.push({
+          [pagination.sortField]: pagination.sortOrder,
+        });
+        break;
+    }
 
     const [count, data] = await Promise.all([
       this.prismaService.asset.count({
@@ -174,9 +213,7 @@ export class AssignmentService {
           ],
         },
 
-        orderBy: {
-          [pagination.sortField]: pagination.sortOrder,
-        },
+        orderBy,
 
         include: {
           category: true,
@@ -210,8 +247,7 @@ export class AssignmentService {
         assignedTo: {
           select: {
             staffCode: true,
-            firstName: true,
-            lastName: true,
+            fullName: true,
             type: true,
             location: true,
           },
@@ -277,12 +313,6 @@ export class AssignmentService {
     if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
       throw new BadRequestException(
         Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
-      );
-    }
-
-    if (editUser.id !== assignment.assignedById) {
-      throw new BadRequestException(
-        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_YOURS,
       );
     }
 

@@ -477,23 +477,6 @@ describe('Assignment Service', () => {
     }
   });
 
-  it('Should not edit assignment if user is not the one who assigned', async () => {
-    (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValueOnce({
-      ...assignment,
-      assignedById: 2,
-    });
-
-    try {
-      await service.update(createdUser, 1, assignmentDto);
-      fail('Should not reach here');
-    } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
-      expect(error.message).toBe(
-        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_YOURS,
-      );
-    }
-  });
-
   it('Should not edit assignment if updated assigned user is not found', async () => {
     (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValueOnce(
       assignment,

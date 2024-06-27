@@ -27,6 +27,12 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 export class AssignmentController {
   constructor(private readonly assignmentService: AssignmentService) {}
 
+  @Get()
+  @Roles(AccountType.ADMIN)
+  getAll(@GetUser() user: Account) {
+    return this.assignmentService.getAll(user);
+  }
+
   @Get(':id')
   @Roles(AccountType.ADMIN)
   getOne(@GetUser() user: Account, @Param('id', ParseIntPipe) id: number) {

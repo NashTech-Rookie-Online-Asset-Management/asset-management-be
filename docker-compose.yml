@@ -15,15 +15,15 @@ services:
       POSTGRES_USER: admin
       POSTGRES_DB: postgres
 
-  asset-manament-be: 
-    build: .
-    container_name: asset-management-be
-    networks:
-      - asset-management-network
-    depends_on:
-      - asset-management-database
-    env_file:
-      - .env
+  # asset-manament-be: 
+  #   build: .
+  #   container_name: asset-management-be
+  #   networks:
+  #     - asset-management-network
+  #   depends_on:
+  #     - asset-management-database
+  #   env_file:
+  #     - .env
 
 networks:
   asset-management-network:

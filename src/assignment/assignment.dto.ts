@@ -3,6 +3,7 @@ import {
   IsDateString,
   IsEnum,
   IsNotEmpty,
+  IsNumberString,
   IsOptional,
   IsString,
   Length,
@@ -34,11 +35,13 @@ export class AssignmentDto {
 export enum UserSortKey {
   STAFF_CODE = 'staffCode',
   FULL_NAME = 'fullName',
+  TYPE = 'type',
 }
 
 export enum AssetSortKey {
   ASSET_CODE = 'assetCode',
   ASSET_NAME = 'name',
+  ASSET_CATEGORY = 'category',
 }
 
 export class UserPaginationDto extends PaginationDto {
@@ -48,6 +51,12 @@ export class UserPaginationDto extends PaginationDto {
     enum: UserSortKey,
   })
   readonly sortField: UserSortKey = UserSortKey.STAFF_CODE;
+
+  // To exclude it's user to available user list
+  @IsNumberString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  assignmentId?: string;
 }
 
 export class AssetPaginationDto extends PaginationDto {
