@@ -164,7 +164,7 @@ describe('UsersService', () => {
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(10);
 
-      const result = await service.selectMany(username, location, dto);
+      const result = await service.selectMany(username, adminMockup, dto);
 
       expect(result.data.length).toBe(2);
       expect(result.pagination.totalPages).toBe(1);
@@ -229,7 +229,7 @@ describe('UsersService', () => {
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
 
-      const result = await service.selectMany(username, location, dto);
+      const result = await service.selectMany(username, adminMockup, dto);
 
       expect(result.data.length).toBe(1);
       expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
@@ -302,7 +302,7 @@ describe('UsersService', () => {
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
 
-      const result = await service.selectMany(username, location, dto);
+      const result = await service.selectMany(username, adminMockup, dto);
 
       expect(result.data.length).toBe(1);
       expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
@@ -646,7 +646,7 @@ describe('UsersService', () => {
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(10);
 
-      const result = await service.selectMany(username, location, dto);
+      const result = await service.selectMany(username, adminMockup, dto);
 
       expect(result.data.length).toBe(2);
       expect(result.pagination.totalPages).toBe(1);
@@ -707,7 +707,7 @@ describe('UsersService', () => {
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
 
-      const result = await service.selectMany(username, location, dto);
+      const result = await service.selectMany(username, adminMockup, dto);
 
       expect(result.data.length).toBe(1);
       expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
@@ -779,7 +779,7 @@ describe('UsersService', () => {
 
       (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
 
-      const result = await service.selectMany(username, location, dto);
+      const result = await service.selectMany(username, adminMockup, dto);
 
       expect(result.data.length).toBe(1);
       expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({

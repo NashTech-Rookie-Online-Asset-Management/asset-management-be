@@ -17,7 +17,6 @@ import { GetUser, Roles } from '../common/decorators';
 import { Account, AccountType } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto, UserPaginationDto } from './dto';
-import { Location } from '@prisma/client';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserType } from './types';
 @Controller('users')
@@ -44,10 +43,10 @@ export class UsersController {
   @Get()
   async getUsers(
     @GetUser('username') username: string,
-    @GetUser('location') location: Location,
+    @User() admin: UserType,
     @Query() dto: UserPaginationDto,
   ) {
-    return this.usersService.selectMany(username, location, dto);
+    return this.usersService.selectMany(username, admin, dto);
   }
 
   @Get(':username')

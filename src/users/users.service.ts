@@ -262,11 +262,7 @@ export class UsersService {
     return `${username}@${formattedDOB}`;
   }
 
-  async selectMany(
-    username: string,
-    location: Location,
-    dto: UserPaginationDto,
-  ) {
+  async selectMany(username: string, admin: UserType, dto: UserPaginationDto) {
     const orderBy = [];
     switch (dto.sortField) {
       case FindAllUsersSortKey.FIRST_NAME:
@@ -327,7 +323,9 @@ export class UsersService {
 
     const conditions = {
       where: {
-        location: location,
+        ...(admin.type !== AccountType.ROOT
+          ? { location: admin.location }
+          : {}),
         username: {
           not: username,
         },
@@ -440,7 +438,10 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(Messages.USER.FAILED.NOT_FOUND);
     }
-    if (user.location !== liveUser.location) {
+    if (
+      liveUser.type !== AccountType.ROOT &&
+      user.location !== liveUser.location
+    ) {
       throw new ForbiddenException(Messages.USER.FAILED.VIEW_NOT_SAME_LOCATION);
     }
     if (user.status === UserStatus.DISABLED) {

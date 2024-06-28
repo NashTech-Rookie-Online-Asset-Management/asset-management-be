@@ -180,7 +180,6 @@ describe('UsersController', () => {
   describe('getUsers', () => {
     it('should return a list of users successfully', async () => {
       const username = 'admin';
-      const location: Location = Location.HCM;
       const dto: UserPaginationDto = { page: 1, take: 10, skip: 1 };
 
       const result = [
@@ -197,19 +196,18 @@ describe('UsersController', () => {
 
       mockUsersService.selectMany.mockResolvedValue(result);
 
-      expect(await controller.getUsers(username, location, dto)).toEqual(
+      expect(await controller.getUsers(username, adminMockup, dto)).toEqual(
         result,
       );
       expect(usersService.selectMany).toHaveBeenCalledWith(
         username,
-        location,
+        adminMockup,
         dto,
       );
     });
 
     it('should throw an error if retrieving users fails', async () => {
       const username = 'admin';
-      const location: Location = Location.HCM;
       const dto: UserPaginationDto = { page: 1, take: 10, skip: 1 };
 
       mockUsersService.selectMany.mockRejectedValue(
@@ -217,11 +215,11 @@ describe('UsersController', () => {
       );
 
       await expect(
-        controller.getUsers(username, location, dto),
+        controller.getUsers(username, adminMockup, dto),
       ).rejects.toThrow('Failed to retrieve users');
       expect(usersService.selectMany).toHaveBeenCalledWith(
         username,
-        location,
+        adminMockup,
         dto,
       );
     });
