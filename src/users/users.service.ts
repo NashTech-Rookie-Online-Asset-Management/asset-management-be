@@ -31,6 +31,7 @@ import { UserType } from './types';
 @Injectable()
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
+
   async create(admin: UserType, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
     const fullName = `${firstName} ${lastName}`;
@@ -50,8 +51,7 @@ export class UsersService {
         : location || admin.location;
 
     //generate staffCode
-    const usersCount = await this.prismaService.account.count();
-    const staffCode = `SD${(usersCount + 1).toString().padStart(4, '0')}`;
+    const staffCode = await this.generateUniqueStaffCode();
     //generate username
     const username = await this.generateUsername(firstName, lastName);
     //generate password
@@ -165,7 +165,24 @@ export class UsersService {
       throw new BadRequestException(error.message);
     }
   }
+  private async generateUniqueStaffCode(): Promise<string> {
+    const prefix = 'SD';
+    let count = await this.prismaService.account.count();
+    let staffCode: string;
 
+    do {
+      count++;
+      staffCode = `${prefix}${count.toString().padStart(4, '0')}`;
+      const existingUser = await this.prismaService.account.findUnique({
+        where: { staffCode },
+      });
+      if (!existingUser) {
+        break;
+      }
+    } while (true);
+
+    return staffCode;
+  }
   private async generateUsername(
     firstName: string,
     lastName: string,
@@ -280,7 +297,16 @@ export class UsersService {
       OR: [],
     };
 
-    if (dto.search?.includes('SD')) {
+    if (/\d+/.test(dto.search ?? '') == false && dto.search?.length > 0) {
+      searchClause.OR.push({
+        fullName: {
+          contains: dto.search,
+          mode: 'insensitive' as const,
+        },
+      });
+    }
+
+    if (dto.search?.length <= 6) {
       searchClause.OR.push({
         staffCode: {
           contains: dto.search,
@@ -289,13 +315,14 @@ export class UsersService {
       });
     }
 
-    if (/SD\d+/.test(dto.search ?? '') == false && dto.search?.length > 0) {
-      searchClause.OR.push({
-        fullName: {
-          contains: dto.search,
-          mode: 'insensitive' as const,
+    if (dto.search?.length >= 264) {
+      return {
+        data: [],
+        pagination: {
+          totalPages: 0,
+          totalCount: 0,
         },
-      });
+      };
     }
 
     const conditions = {

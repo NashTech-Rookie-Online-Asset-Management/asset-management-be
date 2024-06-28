@@ -246,6 +246,12 @@ describe('UsersService', () => {
                 mode: 'insensitive',
               },
             },
+            {
+              staffCode: {
+                contains: dto.search,
+                mode: 'insensitive',
+              },
+            },
           ],
         },
         orderBy: [],
@@ -714,6 +720,12 @@ describe('UsersService', () => {
           OR: [
             {
               fullName: {
+                contains: dto.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              staffCode: {
                 contains: dto.search,
                 mode: 'insensitive',
               },
