@@ -51,8 +51,7 @@ export class UsersService {
         : location || admin.location;
 
     //generate staffCode
-    const usersCount = await this.prismaService.account.count();
-    const staffCode = `SD${(usersCount + 1).toString().padStart(4, '0')}`;
+    const staffCode = await this.generateUniqueStaffCode();
     //generate username
     const username = await this.generateUsername(firstName, lastName);
     //generate password
@@ -166,7 +165,24 @@ export class UsersService {
       throw new BadRequestException(error.message);
     }
   }
+  private async generateUniqueStaffCode(): Promise<string> {
+    const prefix = 'SD';
+    let count = await this.prismaService.account.count();
+    let staffCode: string;
 
+    do {
+      count++;
+      staffCode = `${prefix}${count.toString().padStart(4, '0')}`;
+      const existingUser = await this.prismaService.account.findUnique({
+        where: { staffCode },
+      });
+      if (!existingUser) {
+        break;
+      }
+    } while (true);
+
+    return staffCode;
+  }
   private async generateUsername(
     firstName: string,
     lastName: string,
