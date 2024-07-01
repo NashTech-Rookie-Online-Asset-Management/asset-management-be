@@ -20,13 +20,18 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
+import { ReportPaginationDto } from 'src/report/dto';
+import { ReportService } from 'src/report/report.service';
 
 @Controller('assets')
 @ApiTags('ASSETS')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(AccountType.ADMIN, AccountType.ROOT)
 export class AssetController {
-  constructor(private readonly assetService: AssetService) {}
+  constructor(
+    private readonly assetService: AssetService,
+    private readonly reportService: ReportService,
+  ) {}
 
   @Get()
   getAssets(
@@ -34,6 +39,11 @@ export class AssetController {
     @Query() dto: AssetPageOptions,
   ) {
     return this.assetService.getAssets(location, dto);
+  }
+
+  @Get('/report')
+  getReport(@Query() dto: ReportPaginationDto) {
+    return this.reportService.selectMany(dto);
   }
 
   @Get(':id')

@@ -9,6 +9,8 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { UserType } from 'src/users/types';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
+import { ReportService } from 'src/report/report.service';
+import { ReportPaginationDto } from 'src/report/dto';
 
 const adminMockup: UserType = {
   id: 1,
@@ -22,7 +24,7 @@ const adminMockup: UserType = {
 describe('AssetController', () => {
   let controller: AssetController;
   let service: AssetService;
-
+  let reportService: ReportService;
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AssetController],
@@ -37,6 +39,12 @@ describe('AssetController', () => {
             delete: jest.fn(),
           },
         },
+        {
+          provide: ReportService,
+          useValue: {
+            selectMany: jest.fn(),
+          },
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -47,6 +55,7 @@ describe('AssetController', () => {
 
     controller = module.get<AssetController>(AssetController);
     service = module.get<AssetService>(AssetService);
+    reportService = module.get<ReportService>(ReportService);
   });
 
   it('should be defined', () => {
@@ -169,6 +178,35 @@ describe('AssetController', () => {
         message: Messages.ASSET.SUCCESS.DELETED,
       });
       expect(service.delete).toHaveBeenCalledWith(location, id);
+    });
+  });
+
+  describe('getReport', () => {
+    it('should call reportService.getReport with correct parameters', async () => {
+      const dto: ReportPaginationDto = {
+        skip: 0,
+      };
+      jest.spyOn(reportService, 'selectMany').mockResolvedValue({
+        data: [
+          {
+            categoryName: 'Laptop',
+            total: 0,
+            assigned: 0,
+            available: 0,
+            notAvailable: 0,
+            waitingForRecycling: 0,
+            recycled: 0,
+          },
+        ],
+        pagination: {
+          totalPages: 0,
+          totalCount: 0,
+        },
+      });
+
+      await reportService.selectMany(dto);
+
+      expect(reportService.selectMany).toHaveBeenCalledWith(dto);
     });
   });
 });
