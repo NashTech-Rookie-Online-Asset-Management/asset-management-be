@@ -5,11 +5,10 @@ import {
   Asset,
   Assignment,
   AssignmentState,
-  Category,
-  Location,
   Prisma,
   PrismaClient,
 } from '@prisma/client';
+import seedConfig from '../seed-config';
 const prisma = new PrismaClient();
 
 type bindType = Pick<Prisma.AssignmentCreateInput, 'note' | 'state'>;
@@ -29,14 +28,17 @@ export function createRandomAssignment(): bindType {
 export const ASSIGNMENTS: bindType[] = faker.helpers.multiple(
   createRandomAssignment,
   {
-    count: {
-      min: 20,
-      max: 100,
-    },
+    count: seedConfig.assignment.count,
   },
 );
 
-export async function seedAssignments(assets: Asset[], accounts: Account[]) {
+export async function seedAssignments({
+  assets,
+  accounts,
+}: {
+  assets: Asset[];
+  accounts: Account[];
+}) {
   const assignments: Assignment[] = [];
   for (const [index, assignment] of ASSIGNMENTS.entries()) {
     const asset = faker.helpers.arrayElement(assets);

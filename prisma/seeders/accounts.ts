@@ -9,6 +9,8 @@ import {
 } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { PrismaClient } from '@prisma/client';
+import { seedConfig } from '../seed-config';
+
 const prisma = new PrismaClient();
 
 export function createRandomAccount(): Prisma.AccountCreateInput {
@@ -22,20 +24,20 @@ export function createRandomAccount(): Prisma.AccountCreateInput {
       .map((v) => v[0])
       .join('')
       .toLowerCase();
+
   return {
     firstName,
     lastName,
     fullName,
     username,
-    staffCode: `SD${faker.string.numeric({
+    staffCode: `${seedConfig.account.staffCodePrefix}${faker.string.numeric({
       length: 4,
       allowLeadingZeros: true,
     })}`,
     status: faker.helpers.enumValue(UserStatus),
     gender: faker.helpers.enumValue(Gender),
     dob: faker.date.birthdate(),
-    // default: P@ssw0rd
-    password: '$2a$12$h2QQyk9kdTyLgoTQapgLx.cQ0mthkT0./ZO11MdLXPyb.dSbGQeWm',
+    password: seedConfig.account.password,
     location: faker.helpers.enumValue(Location),
     joinedAt: faker.date.past(),
     type: faker.helpers.enumValue(AccountType),
@@ -45,10 +47,7 @@ export function createRandomAccount(): Prisma.AccountCreateInput {
 export const ACCOUNTS: Prisma.AccountCreateInput[] = faker.helpers.multiple(
   createRandomAccount,
   {
-    count: {
-      min: 10,
-      max: 30,
-    },
+    count: seedConfig.account.count,
   },
 );
 
