@@ -81,7 +81,6 @@ model ReturningRequest {
   state         RequestState
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
-  assignedDate  DateTime
   assignment    Assignment   @relation(fields: [assignmentId], references: [id])
   requestedBy   Account      @relation("requestedBy", fields: [requestedById], references: [id])
   acceptedBy    Account?     @relation("acceptedBy", fields: [acceptedById], references: [id])
@@ -121,6 +120,7 @@ enum AssetState {
 enum AssignmentState {
   WAITING_FOR_ACCEPTANCE
   ACCEPTED
+  DECLINED
   IS_REQUESTED
 }
 

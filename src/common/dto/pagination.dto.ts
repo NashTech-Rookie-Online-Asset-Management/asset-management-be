@@ -17,7 +17,7 @@ export class PaginationDto {
   @IsInt()
   @Min(1)
   @Max(MAX_PAGE_SIZE)
-  readonly take?: number;
+  readonly take?: number = MAX_PAGE_SIZE;
 
   get skip(): number {
     if (!this.take) return 0;

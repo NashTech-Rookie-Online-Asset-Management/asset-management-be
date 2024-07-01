@@ -22,7 +22,6 @@ export function createRandomReturningRequest(
 
   return {
     state,
-    assignedDate: faker.date.past(),
     requestedBy: {
       connect: {
         id: requestedById,

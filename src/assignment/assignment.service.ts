@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   Account,
   AccountType,
@@ -17,6 +21,7 @@ import {
 import { Messages } from 'src/common/constants';
 import { AssetService } from 'src/asset/asset.service';
 import { UserType } from 'src/users/types';
+import { ResponseAssignmentDto } from './dto';
 
 @Injectable()
 export class AssignmentService {
@@ -472,7 +477,6 @@ export class AssignmentService {
         requestedById: user.id,
         acceptedById: null,
         returnedDate: null,
-        assignedDate: assignment.assignedDate,
         state: RequestState.WAITING_FOR_RETURNING,
       },
     });
@@ -481,6 +485,73 @@ export class AssignmentService {
       data: { state: AssignmentState.IS_REQUESTED },
     });
     return returnRequest;
+  }
+
+  async responseAssignedAssignment(
+    user: UserType,
+    assignmentId: number,
+    dto: ResponseAssignmentDto,
+  ) {
+    const { state } = dto;
+    const assignment = await this.prismaService.assignment.findUnique({
+      where: {
+        id: assignmentId,
+      },
+      include: {
+        asset: true,
+        assignedTo: true,
+      },
+    });
+    if (!assignment) {
+      throw new NotFoundException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    }
+    if (
+      user.type !== AccountType.ROOT &&
+      user.location !== assignment.assignedTo.location
+    ) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.USER_NOT_IN_SAME_LOCATION,
+      );
+    }
+
+    if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.NOT_WAITING_FOR_ACCEPTANCE,
+      );
+    }
+
+    if (
+      user.type !== AccountType.ROOT &&
+      user.staffCode !== assignment.assignedTo.staffCode
+    ) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.NOT_YOURS);
+    }
+
+    if (state) {
+      await this.prismaService.assignment.update({
+        where: { id: assignment.id },
+        data: { state: AssignmentState.ACCEPTED },
+      });
+
+      return { message: Messages.ASSIGNMENT.SUCCESS.ACCEPTED };
+    } else {
+      await this.prismaService.assignment.update({
+        where: { id: assignment.id },
+        data: { state: AssignmentState.DECLINED },
+      });
+
+      await this.prismaService.asset.update({
+        where: {
+          id: assignment.assetId,
+        },
+        data: {
+          state: AssetState.AVAILABLE,
+        },
+      });
+      return { message: Messages.ASSIGNMENT.SUCCESS.DECLINED };
+    }
   }
 }
 // Khi tao -> Check asset available

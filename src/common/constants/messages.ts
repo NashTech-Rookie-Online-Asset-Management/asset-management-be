@@ -128,7 +128,10 @@ export const Messages = {
     },
   },
   ASSIGNMENT: {
-    SUCCESS: {},
+    SUCCESS: {
+      ACCEPTED: 'Accepted assignment successfully',
+      DECLINED: 'Declined assignment successfully',
+    },
     FAILED: {
       USER_DISABLED: 'User is disabled',
       USER_NOT_FOUND: 'User is not found',
@@ -143,7 +146,12 @@ export const Messages = {
       ASSIGNMENT_ALREADY_CLOSED: 'Assignment is already closed',
       ASSIGNMENT_NOT_YOURS: 'You do not have right to edit to this assignment',
       NOT_ACCEPTED: 'Assignment is not accepted',
+      NOT_WAITING_FOR_ACCEPTANCE: 'Assignment is not waiting for acceptance',
       NOT_YOURS: 'Assignment is not yours',
+    },
+    VALIDATE: {
+      STATE: 'State is required',
+      STATE_INVALID: 'Invalid state',
     },
   },
   RETURNING_REQUEST: {

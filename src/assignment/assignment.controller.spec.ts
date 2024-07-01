@@ -1,7 +1,13 @@
 import { ExecutionContext } from '@nestjs/common';
 import { AssignmentController } from './assignment.controller';
 import { AssignmentService } from './assignment.service';
-import { Account, AccountType, Gender, Location } from '@prisma/client';
+import {
+  Account,
+  AccountType,
+  Gender,
+  Location,
+  UserStatus,
+} from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -12,6 +18,16 @@ import {
   UserPaginationDto,
 } from './assignment.dto';
 import { AssetService } from 'src/asset/asset.service';
+import { UserType } from 'src/users/types';
+
+const adminMockup: UserType = {
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  location: Location.HCM,
+  type: AccountType.ADMIN,
+  username: 'admin',
+};
 
 const mockUserResult = [
   { id: 1, name: 'John Doe', location: 'Jakarta' },
@@ -66,6 +82,7 @@ describe('AssignmetnController', () => {
     create: jest.fn(),
     update: jest.fn(),
     requestReturn: jest.fn(),
+    responseAssignedAssignment: jest.fn(),
   };
 
   const mockAssetService = {
@@ -289,6 +306,22 @@ describe('AssignmetnController', () => {
         expect(error.message).toBe('Unauthorized');
         expect(mockAssignmentService.requestReturn).not.toHaveBeenCalled();
       }
+    });
+  });
+
+  describe('responseAssignment', () => {
+    it('Should response assignment if user is admin', async () => {
+      await createTestingModule(AccountType.ADMIN);
+      mockAssignmentService.responseAssignedAssignment.mockResolvedValue(
+        mockCreateAssignmentResult,
+      );
+      const result = await controller.responseAssignment(adminMockup, 1, {
+        state: true,
+      });
+      expect(result).toBe(mockCreateAssignmentResult);
+      expect(
+        mockAssignmentService.responseAssignedAssignment,
+      ).toHaveBeenCalled();
     });
   });
 });

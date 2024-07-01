@@ -23,6 +23,7 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { BaseController } from 'src/common/base/base.controller';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserType } from 'src/users/types';
+import { ResponseAssignmentDto } from './dto';
 
 @Controller('assignment')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -86,5 +87,19 @@ export class AssignmentController extends BaseController {
     @Param('id', ParseIntPipe) assignmentId: number,
   ) {
     return this.assignmentService.requestReturn(user, assignmentId);
+  }
+
+  @Put('respond/:id')
+  @Roles(AccountType.ADMIN, AccountType.STAFF)
+  responseAssignment(
+    @User() user: UserType,
+    @Param('id', ParseIntPipe) assignmentId: number,
+    @Body() dto: ResponseAssignmentDto,
+  ) {
+    return this.assignmentService.responseAssignedAssignment(
+      user,
+      assignmentId,
+      dto,
+    );
   }
 }
