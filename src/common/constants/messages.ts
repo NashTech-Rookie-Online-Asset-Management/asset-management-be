@@ -146,4 +146,25 @@ export const Messages = {
       NOT_YOURS: 'Assignment is not yours',
     },
   },
+  RETURNING_REQUEST: {
+    SUCCESS: {
+      CANCELLED: 'Returning request cancelled successfully',
+      CONFIRMED: 'Returning request confirmed successfully',
+    },
+    FAILED: {
+      USER_DISABLED: 'User is disabled',
+      USER_NOT_FOUND: 'User is not found',
+      RETURNING_REQUEST_NOT_FOUND: 'Returning request not found',
+      RETURNING_REQUEST_ALREADY_CLOSED: 'Returning request is already closed',
+      RETURNING_REQUEST_NOT_YOURS:
+        'You do not have right to edit to this returning request',
+      NOT_FOUND: 'Returning request not found',
+      INVALID_STATE: 'Invalid state',
+      INVALID_LOCATION: 'Invalid location',
+    },
+    VALIDATE: {
+      STATE: 'State is required',
+      STATE_INVALID: 'Invalid state',
+    },
+  },
 };

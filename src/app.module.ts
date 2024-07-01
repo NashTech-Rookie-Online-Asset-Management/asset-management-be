@@ -10,6 +10,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { UsersModule } from './users/users.module';
 import { CategoryModule } from './category/category.module';
 import { AssignmentModule } from './assignment/assignment.module';
+import { ReturningRequestsModule } from './returning-requests/returning-requests.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AssignmentModule } from './assignment/assignment.module';
     UsersModule,
     CategoryModule,
     AssignmentModule,
+    ReturningRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],
