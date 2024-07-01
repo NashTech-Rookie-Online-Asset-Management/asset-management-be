@@ -7,13 +7,23 @@ import {
   AssignmentState,
   Gender,
   Location,
+  UserStatus,
 } from '@prisma/client';
 import { Messages } from 'src/common/constants';
 import { AssetPaginationDto, UserPaginationDto } from './assignment.dto';
 import { AssetService } from 'src/asset/asset.service';
 import { AssignmentService } from './assignment.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from 'src/users/types';
 
+const adminMockup: UserType = {
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  location: Location.HCM,
+  type: AccountType.ADMIN,
+  username: 'admin',
+};
 const createdUser: Account = {
   id: 1,
   firstName: 'John',
@@ -114,6 +124,7 @@ describe('Assignment Service', () => {
         create: jest.fn(),
         findFirst: jest.fn(),
         update: jest.fn(),
+        findUnique: jest.fn(),
       },
     } as any;
 
@@ -808,5 +819,99 @@ describe('Assignment Service', () => {
     expect(await service.update(createdUser, 1, assignmentDto)).toEqual(
       assignmentDto,
     );
+  });
+
+  describe('returnRequest', () => {
+    const assignment = {
+      id: 1,
+      state: AssignmentState.WAITING_FOR_ACCEPTANCE,
+      assignedTo: {
+        location: Location.DN,
+      },
+    };
+    it('Should not return request if assignment is not found', async () => {
+      (mockPrisma.assignment.findUnique as jest.Mock).mockResolvedValueOnce(
+        null,
+      );
+
+      await expect(service.requestReturn(adminMockup, 1)).rejects.toThrow(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    });
+    it('Should not return request if user is not in the same location', async () => {
+      (mockPrisma.assignment.findUnique as jest.Mock).mockResolvedValueOnce(
+        assignment,
+      );
+
+      (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce({
+        ...assignedUser,
+        location: Location.DN,
+      });
+
+      await expect(service.requestReturn(adminMockup, 1)).rejects.toThrow(
+        Messages.ASSIGNMENT.FAILED.USER_NOT_IN_SAME_LOCATION,
+      );
+    });
+
+    it('Should not return request if user is staff and it not assigned to him', async () => {
+      const user = {
+        ...assignedUser,
+        type: AccountType.STAFF,
+        staffCode: 'ST0002',
+      };
+
+      const assignmentMock = {
+        ...assignment,
+        state: AssignmentState.ACCEPTED,
+        assignedTo: {
+          ...assignment.assignedTo,
+          staffCode: 'ST0001',
+          location: Location.HCM,
+        },
+      };
+
+      (mockPrisma.assignment.findUnique as jest.Mock).mockResolvedValueOnce(
+        assignmentMock,
+      );
+
+      (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce(user);
+
+      await expect(service.requestReturn(user, 1)).rejects.toThrow(
+        Messages.ASSIGNMENT.FAILED.NOT_YOURS,
+      );
+    });
+
+    it('Should not return request if assignment is not accepted', async () => {
+      (mockPrisma.assignment.findUnique as jest.Mock).mockResolvedValueOnce({
+        ...assignment,
+        assignedTo: {
+          ...assignment.assignedTo,
+          location: Location.HCM,
+        },
+      });
+
+      (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce(
+        assignedUser,
+      );
+
+      await expect(service.requestReturn(adminMockup, 1)).rejects.toThrow(
+        Messages.ASSIGNMENT.FAILED.NOT_ACCEPTED,
+      );
+    });
+
+    it('Should return request', async () => {
+      (mockPrisma.assignment.findUnique as jest.Mock).mockResolvedValueOnce(
+        assignment,
+      );
+
+      (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce(
+        assignedUser,
+      );
+
+      (mockPrisma.assignment.update as jest.Mock).mockResolvedValueOnce({
+        ...assignment,
+        returnRequest: true,
+      });
+    });
   });
 });

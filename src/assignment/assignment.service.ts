@@ -4,6 +4,7 @@ import {
   AccountType,
   AssetState,
   AssignmentState,
+  RequestState,
   UserStatus,
 } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -15,6 +16,7 @@ import {
 } from './assignment.dto';
 import { Messages } from 'src/common/constants';
 import { AssetService } from 'src/asset/asset.service';
+import { UserType } from 'src/users/types';
 
 @Injectable()
 export class AssignmentService {
@@ -426,6 +428,59 @@ export class AssignmentService {
         Messages.ASSIGNMENT.FAILED.DATE_IN_THE_PAST,
       );
     }
+  }
+
+  async requestReturn(user: UserType, assignmentId: number) {
+    const assignment = await this.prismaService.assignment.findUnique({
+      where: {
+        id: assignmentId,
+      },
+      include: {
+        asset: true,
+        assignedTo: true,
+      },
+    });
+
+    if (!assignment) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    }
+
+    if (
+      user.type !== AccountType.ROOT &&
+      user.location !== assignment.assignedTo.location
+    ) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.USER_NOT_IN_SAME_LOCATION,
+      );
+    }
+
+    if (assignment.state !== AssignmentState.ACCEPTED) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.NOT_ACCEPTED);
+    }
+
+    if (
+      user.type === AccountType.STAFF &&
+      user.staffCode !== assignment.assignedTo.staffCode
+    ) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.NOT_YOURS);
+    }
+    const returnRequest = await this.prismaService.returningRequest.create({
+      data: {
+        assignmentId: assignment.id,
+        requestedById: user.id,
+        acceptedById: null,
+        returnedDate: null,
+        assignedDate: assignment.assignedDate,
+        state: RequestState.WAITING_FOR_RETURNING,
+      },
+    });
+    await this.prismaService.assignment.update({
+      where: { id: assignment.id },
+      data: { state: AssignmentState.IS_REQUESTED },
+    });
+    return returnRequest;
   }
 }
 // Khi tao -> Check asset available

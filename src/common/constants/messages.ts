@@ -142,6 +142,8 @@ export const Messages = {
       ASSIGNMENT_NOT_FOUND: 'Assignment not found',
       ASSIGNMENT_ALREADY_CLOSED: 'Assignment is already closed',
       ASSIGNMENT_NOT_YOURS: 'You do not have right to edit to this assignment',
+      NOT_ACCEPTED: 'Assignment is not accepted',
+      NOT_YOURS: 'Assignment is not yours',
     },
   },
 };

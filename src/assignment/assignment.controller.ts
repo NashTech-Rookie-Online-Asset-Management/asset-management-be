@@ -20,6 +20,8 @@ import {
 } from './assignment.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { User } from 'src/common/decorators/user.decorator';
+import { UserType } from 'src/users/types';
 
 @Controller('assignment')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -68,5 +70,14 @@ export class AssignmentController {
     @Body() dto: AssignmentDto,
   ) {
     return this.assignmentService.update(user, id, dto);
+  }
+
+  @Put('return/:id')
+  @Roles(AccountType.ADMIN, AccountType.STAFF)
+  requestReturn(
+    @User() user: UserType,
+    @Param('id', ParseIntPipe) assignmentId: number,
+  ) {
+    return this.assignmentService.requestReturn(user, assignmentId);
   }
 }

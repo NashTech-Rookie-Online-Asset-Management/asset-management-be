@@ -65,6 +65,7 @@ describe('UsersController', () => {
     getAvailableAsset: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
+    requestReturn: jest.fn(),
   };
 
   const mockAssetService = {
@@ -251,5 +252,43 @@ describe('UsersController', () => {
       expect(error.message).toBe('Unauthorized');
       expect(mockAssignmentService.update).not.toHaveBeenCalled();
     }
+  });
+
+  describe('requestReturn', () => {
+    it('Should request return if user is admin', async () => {
+      await createTestingModule(AccountType.ADMIN);
+      mockAssignmentService.requestReturn.mockResolvedValue(
+        mockCreateAssignmentResult,
+      );
+      const result = await controller.requestReturn(createdUser, 1);
+      expect(result).toBe(mockCreateAssignmentResult);
+      expect(mockAssignmentService.requestReturn).toHaveBeenCalled();
+    });
+
+    it('Should request return if user is staff', async () => {
+      await createTestingModule(AccountType.STAFF);
+      mockAssignmentService.requestReturn.mockResolvedValue(
+        mockCreateAssignmentResult,
+      );
+
+      const result = await controller.requestReturn(createdUser, 1);
+      expect(result).toBe(mockCreateAssignmentResult);
+      expect(mockAssignmentService.requestReturn).toHaveBeenCalled();
+    });
+
+    it('Should not request return if user is not admin', async () => {
+      await createTestingModule(AccountType.ROOT);
+      mockAssignmentService.requestReturn.mockResolvedValue(
+        mockCreateAssignmentResult,
+      );
+
+      try {
+        await controller.requestReturn(createdUser, 1);
+      } catch (error) {
+        expect(error.status).toBe(401);
+        expect(error.message).toBe('Unauthorized');
+        expect(mockAssignmentService.requestReturn).not.toHaveBeenCalled();
+      }
+    });
   });
 });
