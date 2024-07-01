@@ -20,6 +20,7 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
+import { BaseController } from 'src/common/base/base.controller';
 import { ReportPaginationDto } from 'src/report/dto';
 import { ReportService } from 'src/report/report.service';
 
@@ -27,11 +28,13 @@ import { ReportService } from 'src/report/report.service';
 @ApiTags('ASSETS')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(AccountType.ADMIN, AccountType.ROOT)
-export class AssetController {
+export class AssetController extends BaseController {
   constructor(
     private readonly assetService: AssetService,
     private readonly reportService: ReportService,
-  ) {}
+  ) {
+    super();
+  }
 
   @Get()
   getAssets(
@@ -59,7 +62,11 @@ export class AssetController {
     @GetUser('location') location: Location,
     @Body() createAssetDto: CreateAssetDto,
   ) {
-    return this.assetService.create(location, createAssetDto);
+    const event = this.actionQueue.createEvent(() =>
+      this.assetService.create(location, createAssetDto),
+    );
+    this.actionQueue.push(event);
+    return this.actionQueue.wait(event.rqid);
   }
 
   @Patch(':id')

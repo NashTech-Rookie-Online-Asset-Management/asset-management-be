@@ -55,7 +55,7 @@ const createdUser: Account = {
   status: 'ACTIVE',
 };
 
-describe('UsersController', () => {
+describe('AssignmetnController', () => {
   let controller: AssignmentController;
   let service: AssignmentService;
   let module: TestingModule;

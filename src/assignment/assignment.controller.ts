@@ -20,14 +20,17 @@ import {
 } from './assignment.dto';
 import { ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { BaseController } from 'src/common/base/base.controller';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserType } from 'src/users/types';
 
 @Controller('assignment')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @ApiTags('ASSIGNMENTS')
-export class AssignmentController {
-  constructor(private readonly assignmentService: AssignmentService) {}
+export class AssignmentController extends BaseController {
+  constructor(private readonly assignmentService: AssignmentService) {
+    super();
+  }
 
   @Get()
   @Roles(AccountType.ADMIN)
@@ -59,7 +62,11 @@ export class AssignmentController {
   @Post()
   @Roles(AccountType.ADMIN)
   create(@GetUser() user: Account, @Body() dto: AssignmentDto) {
-    return this.assignmentService.create(user, dto);
+    const event = this.actionQueue.createEvent(() =>
+      this.assignmentService.create(user, dto),
+    );
+    this.actionQueue.push(event);
+    return this.actionQueue.wait(event.rqid);
   }
 
   @Put(':id')
