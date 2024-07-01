@@ -5,7 +5,7 @@ export const seedConfig = {
       max: 100,
     },
     // default: P@ssw0rd
-    password: '$2a$12$h2QQyk9kdTyLgoTQapgLx.cQ0mthkT0./ZO11MdLXPyb.dSbGQeWm',
+    password: '$2a$10$luCbCsx0IIYW4S5NGb9mG.fNdA.N772/64ZfjeQjO2XT7hReHnSNe',
     staffCodePrefix: 'SD',
   },
   asset: {

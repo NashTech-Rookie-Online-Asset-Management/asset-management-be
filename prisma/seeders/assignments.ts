@@ -20,7 +20,6 @@ export function createRandomAssignment(): bindType {
       AssignmentState.ACCEPTED,
       AssignmentState.IS_REQUESTED,
       AssignmentState.WAITING_FOR_ACCEPTANCE,
-      undefined,
     ]),
   };
 }
@@ -43,26 +42,40 @@ export async function seedAssignments({
   for (const [index, assignment] of ASSIGNMENTS.entries()) {
     const asset = faker.helpers.arrayElement(assets);
     const assignee = faker.helpers.arrayElement(accounts);
+    const isAssetAssigned = assignments.some(
+      (v) =>
+        v.assetId === asset.id &&
+        v.assignedToId === assignee.id &&
+        asset.state === 'ASSIGNED',
+    );
+    if (isAssetAssigned) {
+      continue;
+    }
     const assigner = faker.helpers.arrayElement(accounts);
-    const res = await prisma.assignment.create({
-      data: {
-        ...assignment,
-        asset: {
-          connect: {
-            id: asset.id,
-          },
-        },
-        assignedTo: {
-          connect: {
-            id: assignee.id,
-          },
-        },
-        assignedBy: {
-          connect: {
-            id: assigner.id,
-          },
+    const updatedAt = faker.date.past();
+    const createdAt = faker.date.past({ refDate: updatedAt });
+    const data: Prisma.AssignmentCreateInput = {
+      ...assignment,
+      asset: {
+        connect: {
+          id: asset.id,
         },
       },
+      assignedTo: {
+        connect: {
+          id: assignee.id,
+        },
+      },
+      assignedBy: {
+        connect: {
+          id: assigner.id,
+        },
+      },
+      createdAt,
+      updatedAt,
+    };
+    const res = await prisma.assignment.create({
+      data,
     });
     assignments.push(res);
   }
