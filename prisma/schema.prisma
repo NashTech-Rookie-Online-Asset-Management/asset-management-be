@@ -125,6 +125,6 @@ enum AssignmentState {
 }
 
 enum RequestState {
-  WAITING_FOR_RETURNING
   COMPLETED
+  WAITING_FOR_RETURNING
 }

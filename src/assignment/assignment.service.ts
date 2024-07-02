@@ -11,20 +11,21 @@ import {
   RequestState,
   UserStatus,
 } from '@prisma/client';
+
+import { AssetService } from 'src/asset/asset.service';
+import { Messages } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from 'src/users/types';
 import {
   AssetPaginationDto,
   AssetSortKey,
   AssignmentDto,
   UserPaginationDto,
 } from './assignment.dto';
-import { Messages } from 'src/common/constants';
-import { AssetService } from 'src/asset/asset.service';
-import { UserType } from 'src/users/types';
 import {
-  ResponseAssignmentDto,
   AssignmentPaginationDto,
   AssignmentSortKey,
+  ResponseAssignmentDto,
 } from './dto';
 @Injectable()
 export class AssignmentService {

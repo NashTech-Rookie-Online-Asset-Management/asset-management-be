@@ -1,20 +1,22 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ReturningRequestsService } from './returning-requests.service';
-import { User } from 'src/common/decorators/user.decorator';
-import { ToggleReturnRequestDto } from './dto';
-import { UserType } from 'src/users/types';
 import { ApiTags } from '@nestjs/swagger';
+import { AccountType, Location } from '@prisma/client';
+import { GetUser, Roles } from 'src/common/decorators';
+import { User } from 'src/common/decorators/user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/role.guard';
-import { Roles } from 'src/common/decorators';
-import { AccountType } from '@prisma/client';
+import { UserType } from 'src/users/types';
+import { ReturningRequestPageOptions, ToggleReturnRequestDto } from './dto';
+import { ReturningRequestsService } from './returning-requests.service';
 
 @Controller('returning-requests')
 @ApiTags('RETURNING-REQUESTS')
@@ -24,6 +26,14 @@ export class ReturningRequestsController {
   constructor(
     private readonly returningRequestsService: ReturningRequestsService,
   ) {}
+
+  @Get()
+  getAll(
+    @GetUser('location') location: Location,
+    @Query() dto: ReturningRequestPageOptions,
+  ) {
+    return this.returningRequestsService.getAll(location, dto);
+  }
 
   @Patch(':id')
   toggleReturningRequest(

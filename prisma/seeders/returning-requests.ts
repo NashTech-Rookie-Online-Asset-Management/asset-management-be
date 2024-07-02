@@ -8,7 +8,6 @@ import {
   RequestState,
   ReturningRequest,
 } from '@prisma/client';
-import seedConfig from '../seed-config';
 const prisma = new PrismaClient();
 
 export function createRandomReturningRequest(
@@ -20,8 +19,11 @@ export function createRandomReturningRequest(
     RequestState.WAITING_FOR_RETURNING,
   ]);
 
+  const returnedDate = state === RequestState.COMPLETED ? new Date() : null;
+
   return {
     state,
+    returnedDate,
     requestedBy: {
       connect: {
         id: requestedById,
