@@ -131,6 +131,7 @@ export const Messages = {
     SUCCESS: {
       ACCEPTED: 'Accepted assignment successfully',
       DECLINED: 'Declined assignment successfully',
+      DELETED: 'Deleted assignment successfully',
     },
     FAILED: {
       USER_DISABLED: 'User is disabled',
@@ -149,6 +150,8 @@ export const Messages = {
       NOT_WAITING_FOR_ACCEPTANCE: 'Assignment is not waiting for acceptance',
       NOT_YOURS: 'Assignment is not yours',
       NOT_YOUR: 'This is not your assignment',
+      ACCESS_DENIED: 'You do not have access to this assignment',
+      DELETE_DENIED: 'Cannot delete this assignment',
     },
     VALIDATE: {
       STATE: 'State is required',

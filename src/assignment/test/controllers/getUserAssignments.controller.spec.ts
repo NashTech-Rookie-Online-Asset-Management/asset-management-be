@@ -46,7 +46,7 @@ const assignment = {
   },
 };
 
-describe('AssignmetnController', () => {
+describe('AssignmentController', () => {
   let controller: AssignmentController;
   let module: TestingModule;
 

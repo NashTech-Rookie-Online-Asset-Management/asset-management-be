@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   Account,
@@ -6,11 +7,10 @@ import {
   Gender,
   Location,
 } from '@prisma/client';
-import { Messages } from 'src/common/constants';
 import { AssetService } from 'src/asset/asset.service';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { AssignmentService } from 'src/assignment/assignment.service';
-import { BadRequestException } from '@nestjs/common';
+import { Messages } from 'src/common/constants';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 const createdUser: Account = {
   id: 1,

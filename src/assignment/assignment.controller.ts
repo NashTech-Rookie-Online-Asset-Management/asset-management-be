@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -9,26 +10,26 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { AssignmentService } from './assignment.service';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Account, AccountType, Location } from '@prisma/client';
+import { BaseController } from 'src/common/base/base.controller';
+import { Order } from 'src/common/constants';
 import { GetUser, Roles } from 'src/common/decorators';
-import { Account, AccountType } from '@prisma/client';
+import { User } from 'src/common/decorators/user.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { UserType } from 'src/users/types';
 import {
   AssetPaginationDto,
   AssignmentDto,
   UserPaginationDto,
 } from './assignment.dto';
-import { ApiQuery, ApiTags } from '@nestjs/swagger';
-import { RolesGuard } from 'src/common/guards/role.guard';
-import { User } from 'src/common/decorators/user.decorator';
-import { Order } from 'src/common/constants';
-import { UserType } from 'src/users/types';
+import { AssignmentService } from './assignment.service';
 import {
   AssignmentPaginationDto,
   AssignmentSortKey,
   ResponseAssignmentDto,
 } from './dto';
-import { BaseController } from 'src/common/base/base.controller';
 
 @Controller('assignment')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -119,5 +120,14 @@ export class AssignmentController extends BaseController {
     @Query() pagination: AssignmentPaginationDto,
   ) {
     return this.assignmentService.getUserAssignments(user, pagination);
+  }
+
+  @Delete(':id')
+  @Roles(AccountType.ADMIN)
+  delete(
+    @GetUser('location') location: Location,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.assignmentService.delete(location, id);
   }
 }

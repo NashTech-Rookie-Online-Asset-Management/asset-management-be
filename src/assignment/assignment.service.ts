@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -8,6 +10,7 @@ import {
   AccountType,
   AssetState,
   AssignmentState,
+  Location,
   RequestState,
   UserStatus,
 } from '@prisma/client';
@@ -652,6 +655,56 @@ export class AssignmentService {
         totalCount: count,
       },
     };
+  }
+
+  async delete(location: Location, id: number) {
+    if (!Object.values(Location).includes(location)) {
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    }
+
+    const assignment = await this.prismaService.assignment.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        asset: {
+          select: {
+            location: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    }
+
+    if (assignment.asset.location !== location) {
+      throw new ForbiddenException(Messages.ASSIGNMENT.FAILED.ACCESS_DENIED);
+    }
+
+    if (
+      assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE &&
+      assignment.state !== AssignmentState.DECLINED
+    ) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.DELETE_DENIED);
+    }
+
+    try {
+      await this.prismaService.assignment.delete({
+        where: {
+          id,
+        },
+      });
+
+      return {
+        message: Messages.ASSIGNMENT.SUCCESS.DELETED,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
   }
 }
 // Khi tao -> Check asset available

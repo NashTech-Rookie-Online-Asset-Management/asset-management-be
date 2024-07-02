@@ -30,7 +30,7 @@ const createdUser: Account = {
   status: 'ACTIVE',
 };
 
-describe('AssignmetnController', () => {
+describe('AssignmentController', () => {
   let controller: AssignmentController;
   let module: TestingModule;
 

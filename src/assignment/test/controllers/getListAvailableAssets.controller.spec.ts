@@ -32,7 +32,7 @@ const mockAssetResult = [
   { id: 2, name: 'Asset 2', location: 'Jakarta' },
 ];
 
-describe('AssignmetnController', () => {
+describe('AssignmentController', () => {
   let controller: AssignmentController;
   let module: TestingModule;
 

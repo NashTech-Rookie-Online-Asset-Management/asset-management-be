@@ -33,7 +33,7 @@ const mockCreateAssignmentResult = {
   assignedAt: new Date(),
 };
 
-describe('AssignmetnController', () => {
+describe('AssignmentController', () => {
   let controller: AssignmentController;
   let module: TestingModule;
 

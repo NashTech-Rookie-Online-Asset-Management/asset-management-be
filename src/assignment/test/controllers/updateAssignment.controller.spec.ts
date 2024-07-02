@@ -41,7 +41,7 @@ const createAssignmentDto: AssignmentDto = {
   note: 'Note',
 };
 
-describe('AssignmetnController', () => {
+describe('AssignmentController', () => {
   let controller: AssignmentController;
   let module: TestingModule;
 
