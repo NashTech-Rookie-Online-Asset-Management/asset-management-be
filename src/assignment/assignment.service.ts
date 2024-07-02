@@ -585,7 +585,7 @@ export class AssignmentService {
           orderBy.push({ asset: { name: pagination.sortOrder } });
           break;
         case AssignmentSortKey.CATEGORY:
-          orderBy.push({ asset: { category: pagination.sortOrder } });
+          orderBy.push({ asset: { category: { name: pagination.sortOrder } } });
           break;
         case AssignmentSortKey.ASSIGNED_DATE:
           orderBy.push({ assignedDate: pagination.sortOrder });
