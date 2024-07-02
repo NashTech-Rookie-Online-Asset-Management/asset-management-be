@@ -18,12 +18,17 @@ import {
   AssignmentDto,
   UserPaginationDto,
 } from './assignment.dto';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RolesGuard } from 'src/common/guards/role.guard';
-import { BaseController } from 'src/common/base/base.controller';
 import { User } from 'src/common/decorators/user.decorator';
+import { Order } from 'src/common/constants';
 import { UserType } from 'src/users/types';
-import { ResponseAssignmentDto } from './dto';
+import {
+  AssignmentPaginationDto,
+  AssignmentSortKey,
+  ResponseAssignmentDto,
+} from './dto';
+import { BaseController } from 'src/common/base/base.controller';
 
 @Controller('assignment')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -101,5 +106,18 @@ export class AssignmentController extends BaseController {
       assignmentId,
       dto,
     );
+  }
+
+  @Get('user/assignments')
+  @ApiQuery({ name: 'page', required: false })
+  @ApiQuery({ name: 'take', required: false })
+  @ApiQuery({ name: 'sortField', enum: AssignmentSortKey, required: false })
+  @ApiQuery({ name: 'sortOrder', enum: Order, required: false })
+  @Roles(AccountType.ROOT, AccountType.ADMIN, AccountType.STAFF)
+  async getUserAssignments(
+    @User() user: UserType,
+    @Query() pagination: AssignmentPaginationDto,
+  ) {
+    return this.assignmentService.getUserAssignments(user, pagination);
   }
 }

@@ -21,8 +21,11 @@ import {
 import { Messages } from 'src/common/constants';
 import { AssetService } from 'src/asset/asset.service';
 import { UserType } from 'src/users/types';
-import { ResponseAssignmentDto } from './dto';
-
+import {
+  ResponseAssignmentDto,
+  AssignmentPaginationDto,
+  AssignmentSortKey,
+} from './dto';
 @Injectable()
 export class AssignmentService {
   constructor(
@@ -258,6 +261,16 @@ export class AssignmentService {
         assignedTo: {
           select: {
             staffCode: true,
+            username: true,
+            fullName: true,
+            type: true,
+            location: true,
+          },
+        },
+        assignedBy: {
+          select: {
+            staffCode: true,
+            username: true,
             fullName: true,
             type: true,
             location: true,
@@ -267,6 +280,7 @@ export class AssignmentService {
           select: {
             assetCode: true,
             name: true,
+            specification: true,
             category: true,
             location: true,
           },
@@ -552,6 +566,87 @@ export class AssignmentService {
       });
       return { message: Messages.ASSIGNMENT.SUCCESS.DECLINED };
     }
+  }
+
+  async getUserAssignments(
+    user: UserType,
+    pagination: AssignmentPaginationDto,
+  ) {
+    const currentDate = new Date();
+    const orderBy = [];
+
+    if (pagination.sortField && pagination.sortOrder) {
+      switch (pagination.sortField) {
+        case AssignmentSortKey.ASSET_CODE:
+          orderBy.push({ asset: { assetCode: pagination.sortOrder } });
+          break;
+        case AssignmentSortKey.ASSET_NAME:
+          orderBy.push({ asset: { name: pagination.sortOrder } });
+          break;
+        case AssignmentSortKey.CATEGORY:
+          orderBy.push({ asset: { category: pagination.sortOrder } });
+          break;
+        case AssignmentSortKey.ASSIGNED_DATE:
+          orderBy.push({ assignedDate: pagination.sortOrder });
+          break;
+        case AssignmentSortKey.STATE:
+          orderBy.push({ state: pagination.sortOrder });
+          break;
+        default:
+          break;
+      }
+    }
+    const whereConditions = {
+      assignedToId: user.id,
+      assignedDate: {
+        lte: currentDate,
+      },
+      state: {
+        not: AssignmentState.DECLINED,
+      },
+      ...(pagination.search && {
+        asset: {
+          name: {
+            contains: pagination.search,
+            mode: 'insensitive' as const,
+          },
+        },
+      }),
+    };
+    const [count, assignments] = await Promise.all([
+      this.prismaService.assignment.count({
+        where: whereConditions,
+      }),
+
+      this.prismaService.assignment.findMany({
+        where: whereConditions,
+        orderBy,
+        skip: pagination.skip,
+        take: pagination.take,
+        include: {
+          assignedBy: {
+            select: {
+              staffCode: true,
+              fullName: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+            },
+          },
+        },
+      }),
+    ]);
+    return {
+      data: assignments,
+      pagination: {
+        totalPages: Math.ceil(count / pagination.take),
+        totalCount: count,
+      },
+    };
   }
 }
 // Khi tao -> Check asset available

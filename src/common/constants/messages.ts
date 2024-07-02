@@ -148,6 +148,7 @@ export const Messages = {
       NOT_ACCEPTED: 'Assignment is not accepted',
       NOT_WAITING_FOR_ACCEPTANCE: 'Assignment is not waiting for acceptance',
       NOT_YOURS: 'Assignment is not yours',
+      NOT_YOUR: 'This is not your assignment',
     },
     VALIDATE: {
       STATE: 'State is required',
