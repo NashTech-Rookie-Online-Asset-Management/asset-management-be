@@ -3,6 +3,7 @@ import {
   AccountType,
   AssignmentState,
   Location,
+  RequestState,
   UserStatus,
 } from '@prisma/client';
 import { Order } from 'src/common/constants';
@@ -111,6 +112,10 @@ describe('Assignment Service', () => {
           assignedToId: adminMockup.id,
           assignedDate: { lte: expect.any(Date) },
           state: { not: AssignmentState.DECLINED },
+          OR: [
+            { returningRequest: null },
+            { returningRequest: { state: { not: RequestState.COMPLETED } } },
+          ],
         },
         orderBy: [],
         skip: pagination.skip,
@@ -137,6 +142,10 @@ describe('Assignment Service', () => {
           assignedToId: adminMockup.id,
           assignedDate: { lte: expect.any(Date) },
           state: { not: AssignmentState.DECLINED },
+          OR: [
+            { returningRequest: null },
+            { returningRequest: { state: { not: RequestState.COMPLETED } } },
+          ],
         },
       });
     });
@@ -191,6 +200,10 @@ describe('Assignment Service', () => {
           assignedToId: adminMockup.id,
           assignedDate: { lte: expect.any(Date) },
           state: { not: AssignmentState.DECLINED },
+          OR: [
+            { returningRequest: null },
+            { returningRequest: { state: { not: RequestState.COMPLETED } } },
+          ],
         },
         orderBy: [{ asset: { name: Order.ASC } }],
         skip: pagination.skip,
@@ -217,6 +230,10 @@ describe('Assignment Service', () => {
           assignedToId: adminMockup.id,
           assignedDate: { lte: expect.any(Date) },
           state: { not: AssignmentState.DECLINED },
+          OR: [
+            { returningRequest: null },
+            { returningRequest: { state: { not: RequestState.COMPLETED } } },
+          ],
         },
       });
     });
@@ -249,6 +266,10 @@ describe('Assignment Service', () => {
           assignedToId: adminMockup.id,
           assignedDate: { lte: expect.any(Date) },
           state: { not: AssignmentState.DECLINED },
+          OR: [
+            { returningRequest: null },
+            { returningRequest: { state: { not: RequestState.COMPLETED } } },
+          ],
           asset: {
             name: {
               contains: 'Laptop',
@@ -281,6 +302,10 @@ describe('Assignment Service', () => {
           assignedToId: adminMockup.id,
           assignedDate: { lte: expect.any(Date) },
           state: { not: AssignmentState.DECLINED },
+          OR: [
+            { returningRequest: null },
+            { returningRequest: { state: { not: RequestState.COMPLETED } } },
+          ],
           asset: {
             name: {
               contains: 'Laptop',

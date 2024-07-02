@@ -605,6 +605,10 @@ export class AssignmentService {
       state: {
         not: AssignmentState.DECLINED,
       },
+      OR: [
+        { returningRequest: null },
+        { returningRequest: { state: { not: RequestState.COMPLETED } } },
+      ],
       ...(pagination.search && {
         asset: {
           name: {
