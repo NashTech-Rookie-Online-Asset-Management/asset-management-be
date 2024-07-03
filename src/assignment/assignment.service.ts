@@ -346,10 +346,19 @@ export class AssignmentService {
         },
       },
     });
+
     if (!result)
       throw new NotFoundException(
         Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
       );
+
+    if (
+      user.type === AccountType.STAFF &&
+      result.assignedTo.staffCode !== user.staffCode
+    ) {
+      throw new ForbiddenException(Messages.ASSIGNMENT.FAILED.NOT_YOUR);
+    }
+
     return result;
   }
 

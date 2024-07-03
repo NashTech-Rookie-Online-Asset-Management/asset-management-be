@@ -47,7 +47,7 @@ export class AssignmentController extends BaseController {
   }
 
   @Get(':id')
-  @Roles(AccountType.ADMIN)
+  @Roles(AccountType.ADMIN, AccountType.STAFF)
   getOne(@GetUser() user: Account, @Param('id', ParseIntPipe) id: number) {
     return this.assignmentService.getOne(user, id);
   }
