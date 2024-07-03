@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -23,6 +24,9 @@ import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
 import { BaseController } from 'src/common/base/base.controller';
 import { ReportPaginationDto } from 'src/report/dto';
 import { ReportService } from 'src/report/report.service';
+import { FileFormat } from 'src/common/constants/file-format';
+import { Response } from 'express';
+import { formatDate } from 'src/common/utils';
 
 @Controller('assets')
 @ApiTags('ASSETS')
@@ -47,6 +51,21 @@ export class AssetController extends BaseController {
   @Get('/report')
   getReport(@Query() dto: ReportPaginationDto) {
     return this.reportService.selectMany(dto);
+  }
+
+  @Get('/report/export')
+  async getReportFile(
+    @Query('format') format: FileFormat,
+    @Res() res: Response,
+  ) {
+    const buffer = (await this.reportService.createFile(format)) as Buffer;
+
+    return res
+      .set(
+        'Content-Disposition',
+        `attachment; filename=OAM Report ${formatDate(new Date())}.${format}`,
+      )
+      .send(buffer);
   }
 
   @Get(':id')

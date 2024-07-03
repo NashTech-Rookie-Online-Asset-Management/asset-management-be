@@ -1,11 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
-import { ReportItem, ReportPaginationDto } from './dto';
+import {
+  FindAllReportItemsSortKey,
+  ReportItem,
+  ReportPaginationDto,
+} from './dto';
+import { FileService, GenerateFileInput } from 'src/file/file.service';
+import { FileFormat } from 'src/common/constants/file-format';
+import { Order } from 'src/common/constants';
 
 @Injectable()
 export class ReportService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService,
+  ) {}
 
   async selectMany(queryParams: ReportPaginationDto) {
     const raw = (await this.prismaService.$queryRawUnsafe(`
@@ -53,5 +63,53 @@ export class ReportService {
         totalCount,
       },
     };
+  }
+
+  async createFile(format: FileFormat) {
+    format = FileFormat.EXCEL;
+    const queryParams: ReportPaginationDto = {
+      skip: 0,
+      page: 1,
+      search: '',
+      sortField: FindAllReportItemsSortKey.CATEGORY,
+      sortOrder: Order.ASC,
+    };
+    const res = await this.selectMany(queryParams);
+    const input: GenerateFileInput = {
+      data: res.data,
+      format,
+      columns: [
+        {
+          header: 'Category',
+          key: 'categoryName',
+        },
+        {
+          header: 'Total',
+          key: 'total',
+        },
+        {
+          header: 'Assigned',
+          key: 'assigned',
+        },
+        {
+          header: 'Available',
+          key: 'available',
+        },
+        {
+          header: 'Not available',
+          key: 'notAvailable',
+        },
+        {
+          header: 'Waiting for recycling',
+          key: 'waitingForRecycling',
+        },
+        {
+          header: 'Recycled',
+          key: 'recycled',
+        },
+      ],
+      name: `Sheet 1`,
+    };
+    return this.fileService.generate(input);
   }
 }
