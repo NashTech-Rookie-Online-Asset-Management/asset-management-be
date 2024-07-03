@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ReportService } from './report.service';
 import { ReportPaginationDto } from './dto';
+import { FileService } from 'src/file/file.service';
 
 const mockPrismaService = {
   $queryRawUnsafe: jest.fn(),
@@ -21,6 +22,7 @@ describe('Report service', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        FileService,
       ],
     }).compile();
 

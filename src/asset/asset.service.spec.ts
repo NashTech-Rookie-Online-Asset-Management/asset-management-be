@@ -12,6 +12,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
+import { LockService } from 'src/lock/lock.service';
 
 const adminMockup: UserType = {
   id: 1,
@@ -48,6 +49,7 @@ describe('AssetService', () => {
             },
           },
         },
+        LockService,
       ],
     }).compile();
 

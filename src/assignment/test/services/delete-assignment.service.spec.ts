@@ -4,61 +4,13 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { AssignmentState, Location } from '@prisma/client';
-import { AssetService } from 'src/asset/asset.service';
-import { AssignmentService } from 'src/assignment/assignment.service';
 import { Messages } from 'src/common/constants';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { mockPrisma, service, setupTestModule } from './config/test-setup';
 
 describe('AssignmentService', () => {
-  let service: AssignmentService;
-  let mockPrisma: PrismaService;
-  let mockAssetService: AssetService;
-
   beforeAll(async () => {
-    mockPrisma = {
-      account: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-      },
-      asset: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-      },
-      assignment: {
-        create: jest.fn(),
-        findFirst: jest.fn(),
-        update: jest.fn(),
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        count: jest.fn(),
-        delete: jest.fn(),
-      },
-    } as any;
-
-    mockAssetService = {} as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AssignmentService,
-        {
-          provide: PrismaService,
-          useValue: mockPrisma,
-        },
-        {
-          provide: AssetService,
-          useValue: mockAssetService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<AssignmentService>(AssignmentService);
+    await setupTestModule();
   });
 
   afterEach(() => {

@@ -34,4 +34,8 @@ export class UpdateAssetDto {
   @IsEnum(AssetState, { message: Messages.ASSET.VALIDATE.ASSET_STATE_INVALID })
   @IsOptional()
   state?: AssetState;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: Date | string;
 }

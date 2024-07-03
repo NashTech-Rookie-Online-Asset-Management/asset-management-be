@@ -60,6 +60,10 @@ export const Messages = {
       VIEW_NOT_HAVE_RIGHT:
         'You do not have enough permission to view this user.',
       VIEW_SELF: 'You are not allowed to view yourself currently',
+      DATA_EDITED:
+        'Data has been edited. Please reload the page to see the latest data',
+      CONCURRENT_UPDATE:
+        'Another admin is updating this user. Please try again later',
     },
     VALIDATE: {
       DOB: 'Date of Birth is required',
@@ -88,6 +92,10 @@ export const Messages = {
       ASSET_STATE_INVALID: 'Invalid asset state',
       UPDATE_NOT_SAME_LOCATION:
         'You can only update the asset within the same location',
+      CONCURRENT_UPDATE:
+        'Another admin is updating this asset. Please try again later',
+      DATA_EDITED:
+        'Data has been edited. Please reload the page to see the latest data',
     },
     VALIDATE: {
       NAME: 'Name is required',
@@ -152,6 +160,10 @@ export const Messages = {
       NOT_YOUR: 'This is not your assignment',
       ACCESS_DENIED: 'You do not have access to this assignment',
       DELETE_DENIED: 'Cannot delete this assignment',
+      CONCURRENT_UPDATE:
+        'Another admin is updating this assignment. Please try again later',
+      DATA_EDITED:
+        'Data has been edited. Please reload the page to see the latest data',
     },
     VALIDATE: {
       STATE: 'State is required',

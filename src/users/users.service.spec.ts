@@ -14,6 +14,7 @@ import {
 import { UsersService } from './users.service';
 import { Messages, Order } from 'src/common/constants';
 import { UserType } from './types';
+import { LockService } from 'src/lock/lock.service';
 
 const adminMockup: UserType = {
   id: 1,
@@ -45,6 +46,7 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         { provide: PrismaService, useValue: mockPrismaService },
+        LockService,
       ],
     }).compile();
 

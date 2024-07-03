@@ -1,5 +1,8 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { LockService } from 'src/lock/lock.service';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
@@ -32,11 +35,13 @@ import {
   AssignmentSortKey,
   ResponseAssignmentDto,
 } from './dto';
+
 @Injectable()
 export class AssignmentService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly assetService: AssetService,
+    private readonly LockService: LockService,
   ) {}
 
   async getAll(user: Account, dto: AdminAssignmentPaginationDto) {
@@ -423,81 +428,98 @@ export class AssignmentService {
   }
 
   async update(editUser: Account, id: number, dto: AssignmentDto) {
-    const assignment = await this.prismaService.assignment.findFirst({
-      where: { id },
-      include: {
-        asset: true,
-      },
-    });
-
-    if (!assignment) {
-      throw new BadRequestException(
-        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
-      );
-    }
-
-    if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
-      throw new BadRequestException(
-        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
-      );
-    }
-
-    const isDifferentAsset = assignment.asset.assetCode !== dto.assetCode;
-    await this.validate(editUser, dto, isDifferentAsset);
-
-    await this.assetService.updateState(
-      assignment.asset.assetCode,
-      AssetState.AVAILABLE,
+    const lockAcquired = await this.LockService.acquireLock(
+      `assignment-${id}`,
+      5,
     );
-    await this.assetService.updateState(dto.assetCode, AssetState.ASSIGNED);
+    if (!lockAcquired) {
+      throw new ConflictException(Messages.ASSIGNMENT.FAILED.CONCURRENT_UPDATE);
+    }
+    try {
+      const assignment = await this.prismaService.assignment.findFirst({
+        where: { id },
+        include: {
+          asset: true,
+        },
+      });
 
-    return this.prismaService.assignment.update({
-      where: { id },
-      data: {
-        assignedDate: new Date(dto.assignedDate),
-        note: dto.note,
-        assignedTo: {
-          connect: {
-            staffCode: dto.staffCode,
+      if (!assignment) {
+        throw new BadRequestException(
+          Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+        );
+      }
+
+      if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
+        throw new BadRequestException(
+          Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
+        );
+      }
+      if (dto.updatedAt) {
+        const newDate = new Date(dto.updatedAt);
+        if (assignment.updatedAt.getTime() !== newDate.getTime()) {
+          throw new BadRequestException(Messages.ASSIGNMENT.FAILED.DATA_EDITED);
+        }
+      }
+      const isDifferentAsset = assignment.asset.assetCode !== dto.assetCode;
+      await this.validate(editUser, dto, isDifferentAsset);
+
+      await this.assetService.updateState(
+        assignment.asset.assetCode,
+        AssetState.AVAILABLE,
+      );
+      await this.assetService.updateState(dto.assetCode, AssetState.ASSIGNED);
+
+      return this.prismaService.assignment.update({
+        where: { id },
+        data: {
+          assignedDate: new Date(dto.assignedDate),
+          note: dto.note,
+          assignedTo: {
+            connect: {
+              staffCode: dto.staffCode,
+            },
+          },
+          asset: {
+            connect: {
+              assetCode: dto.assetCode,
+            },
           },
         },
-        asset: {
-          connect: {
-            assetCode: dto.assetCode,
+        include: {
+          assignedBy: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+              location: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
           },
         },
-      },
-      include: {
-        assignedBy: {
-          select: {
-            username: true,
-            staffCode: true,
-            fullName: true,
-            type: true,
-            location: true,
-          },
-        },
-        asset: {
-          select: {
-            assetCode: true,
-            name: true,
-            category: true,
-            location: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            username: true,
-            staffCode: true,
-            fullName: true,
-            type: true,
-            location: true,
-          },
-        },
-      },
-    });
+      });
+    } catch (error) {
+      throw new BadRequestException(error.message);
+    } finally {
+      await this.LockService.releaseLock(`assignment-${id}`);
+    }
   }
-
   private async validate(
     createdUser: Account,
     dto: AssignmentDto,

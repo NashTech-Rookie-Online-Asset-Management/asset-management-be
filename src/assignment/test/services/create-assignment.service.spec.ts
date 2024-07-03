@@ -1,115 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  Account,
-  AccountType,
-  AssetState,
-  Gender,
-  Location,
-} from '@prisma/client';
-import { AssetService } from 'src/asset/asset.service';
-import { AssignmentService } from 'src/assignment/assignment.service';
+import { AccountType, AssetState, Location } from '@prisma/client';
 import { Messages } from 'src/common/constants';
-import { PrismaService } from 'src/prisma/prisma.service';
-
-const createdUser: Account = {
-  id: 1,
-  firstName: 'John',
-  lastName: 'Doe',
-  fullName: 'John Doe',
-  gender: Gender.MALE,
-  location: Location.HCM,
-  password: '123456',
-  staffCode: 'ST001',
-  type: AccountType.ADMIN,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  joinedAt: new Date(),
-  dob: new Date(),
-  username: 'johndoe',
-  status: 'ACTIVE',
-};
-
-const assignmentDto = {
-  assetCode: 'AS001',
-  staffCode: 'ST001',
-  assignedDate: new Date().toLocaleString(),
-  note: null,
-};
-
-const assignedUser: Account = {
-  id: 2,
-  firstName: 'Jane',
-  lastName: 'Doe',
-  fullName: 'Jane Doe',
-  gender: Gender.MALE,
-  location: Location.HCM,
-  password: '123456',
-  staffCode: 'ST001',
-  type: AccountType.ADMIN,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  joinedAt: new Date(),
-  dob: new Date(),
-  username: 'johndoe',
-  status: 'ACTIVE',
-};
-
-const assginedAsset = {
-  id: 1,
-  name: 'Laptop',
-  state: AssetState.AVAILABLE,
-  location: Location.HCM,
-};
+import { mockPrisma, service, setupTestModule } from './config/test-setup';
+import {
+  assignedAsset,
+  assignedUser,
+  assignmentDto,
+  createdUser,
+} from './config/mock-data';
 
 describe('Assignment Service', () => {
-  let service: AssignmentService;
-  let mockPrisma: PrismaService;
-
-  const mockAssetService = {
-    updateState: jest.fn(),
-  };
-
   beforeAll(async () => {
-    mockPrisma = {
-      account: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-      },
-      asset: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-      },
-      assignment: {
-        create: jest.fn(),
-        findFirst: jest.fn(),
-        update: jest.fn(),
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        count: jest.fn(),
-      },
-    } as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AssignmentService,
-        {
-          provide: PrismaService,
-          useValue: mockPrisma,
-        },
-        {
-          provide: AssetService,
-          useValue: mockAssetService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<AssignmentService>(AssignmentService);
+    await setupTestModule();
   });
 
   afterEach(() => {
@@ -161,7 +63,7 @@ describe('Assignment Service', () => {
     });
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
-      assginedAsset,
+      assignedAsset,
     );
 
     try {
@@ -179,7 +81,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
-      ...assginedAsset,
+      ...assignedAsset,
       state: AssetState.ASSIGNED,
     });
 
@@ -200,7 +102,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
-      ...assginedAsset,
+      ...assignedAsset,
       state: AssetState.NOT_AVAILABLE,
     });
 
@@ -221,7 +123,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
-      ...assginedAsset,
+      ...assignedAsset,
       state: AssetState.RECYCLED,
     });
 
@@ -242,7 +144,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
-      ...assginedAsset,
+      ...assignedAsset,
       state: AssetState.WAITING_FOR_RECYCLING,
     });
 
@@ -263,7 +165,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
-      assginedAsset,
+      assignedAsset,
     );
 
     try {
@@ -282,7 +184,7 @@ describe('Assignment Service', () => {
     });
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
-      assginedAsset,
+      assignedAsset,
     );
 
     try {
@@ -301,7 +203,7 @@ describe('Assignment Service', () => {
     });
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
-      assginedAsset,
+      assignedAsset,
     );
 
     try {
@@ -321,7 +223,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce({
-      ...assginedAsset,
+      ...assignedAsset,
       location: Location.DN,
     });
 
@@ -342,7 +244,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
-      assginedAsset,
+      assignedAsset,
     );
 
     try {
@@ -362,7 +264,7 @@ describe('Assignment Service', () => {
     );
 
     (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
-      assginedAsset,
+      assignedAsset,
     );
 
     (mockPrisma.assignment.create as jest.Mock).mockResolvedValueOnce(

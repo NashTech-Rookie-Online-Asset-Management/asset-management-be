@@ -3,35 +3,17 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import { Location } from '@prisma/client';
-import { AssignmentController } from 'src/assignment/assignment.controller';
-import { AssignmentService } from 'src/assignment/assignment.service';
+import { AccountType, Location } from '@prisma/client';
 import { Messages } from 'src/common/constants';
-import { RolesGuard } from 'src/common/guards/role.guard';
+import {
+  controller,
+  mockAssignmentService,
+  setupTestController,
+} from './config/test-setup';
 
 describe('AssignmentController', () => {
-  let controller: AssignmentController;
-
-  const mockAssignmentService = {
-    delete: jest.fn(),
-  };
-
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      controllers: [AssignmentController],
-      providers: [
-        {
-          provide: AssignmentService,
-          useValue: mockAssignmentService,
-        },
-      ],
-    })
-      .overrideGuard(RolesGuard)
-      .useValue({ canActivate: () => true })
-      .compile();
-
-    controller = module.get<AssignmentController>(AssignmentController);
+    await setupTestController(AccountType.ADMIN);
   });
 
   it('should delete an assignment successfully', async () => {

@@ -11,6 +11,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { PrismaService } from './prisma/prisma.service';
 import { ReturningRequestsModule } from './returning-requests/returning-requests.module';
 import { UsersModule } from './users/users.module';
+import { LockModule } from './lock/lock.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     CategoryModule,
     AssignmentModule,
     ReturningRequestsModule,
+    LockModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

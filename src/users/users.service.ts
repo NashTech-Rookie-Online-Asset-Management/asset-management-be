@@ -1,5 +1,7 @@
+import { LockService } from '../lock/lock.service';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -30,7 +32,10 @@ import {
 import { UserType } from './types';
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly lockService: LockService,
+  ) {}
 
   async create(admin: UserType, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
@@ -99,6 +104,13 @@ export class UsersService {
     userStaffCode: string,
     updateUserDto: UpdateUserDto,
   ) {
+    const lockAcquired = await this.lockService.acquireLock(
+      `user-${userStaffCode}`,
+      5,
+    );
+    if (!lockAcquired) {
+      throw new ConflictException(Messages.USER.FAILED.CONCURRENT_UPDATE);
+    }
     try {
       if (admin.staffCode === userStaffCode) {
         throw new BadRequestException(Messages.USER.FAILED.UPDATE_SELF);
@@ -122,7 +134,15 @@ export class UsersService {
         throw new BadRequestException(Messages.USER.FAILED.UPDATE_SAME_TYPE);
       }
 
-      const { dob, gender, joinedAt, type } = updateUserDto;
+      const { dob, gender, joinedAt, type, updatedAt } = updateUserDto;
+      if (updatedAt) {
+        const newDate = new Date(updatedAt);
+
+        if (userExisted.updatedAt.getTime() !== newDate.getTime()) {
+          throw new BadRequestException(Messages.USER.FAILED.DATA_EDITED);
+        }
+      }
+
       if (dob) {
         const newDate = new Date(dob);
         userExisted.dob = newDate;
@@ -163,6 +183,8 @@ export class UsersService {
       return userUpdated;
     } catch (error) {
       throw new BadRequestException(error.message);
+    } finally {
+      this.lockService.releaseLock(`user-${userStaffCode}`);
     }
   }
   private async generateUniqueStaffCode(): Promise<string> {

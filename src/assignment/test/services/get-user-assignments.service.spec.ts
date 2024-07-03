@@ -1,82 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import {
-  AccountType,
-  AssignmentState,
-  Location,
-  RequestState,
-  UserStatus,
-} from '@prisma/client';
+import { AssignmentState, RequestState } from '@prisma/client';
 import { Order } from 'src/common/constants';
-import { AssetService } from 'src/asset/asset.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { UserType } from 'src/users/types';
-import { AssignmentService } from 'src/assignment/assignment.service';
 
 import { AssignmentPaginationDto, AssignmentSortKey } from 'src/assignment/dto';
-
-const adminMockup: UserType = {
-  id: 1,
-  staffCode: 'SD0001',
-  status: UserStatus.ACTIVE,
-  location: Location.HCM,
-  type: AccountType.ADMIN,
-  username: 'admin',
-};
-
-const assignment = {
-  id: 1,
-  assetId: 1,
-  assignedById: 1,
-  assignedToId: 2,
-  note: null,
-  state: AssignmentState.WAITING_FOR_ACCEPTANCE,
-  assignedDate: new Date(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-
-  asset: {
-    assetCode: 'AS001',
-  },
-  assignedTo: {
-    location: Location.DN,
-  },
-};
+import { adminMockup, assignment } from './config/mock-data';
+import { mockPrisma, service, setupTestModule } from './config/test-setup';
 
 describe('Assignment Service', () => {
-  let service: AssignmentService;
-  let mockPrisma: PrismaService;
-
-  const mockAssetService = {
-    updateState: jest.fn(),
-  };
-
   beforeAll(async () => {
-    mockPrisma = {
-      assignment: {
-        create: jest.fn(),
-        findFirst: jest.fn(),
-        update: jest.fn(),
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        count: jest.fn(),
-      },
-    } as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AssignmentService,
-        {
-          provide: PrismaService,
-          useValue: mockPrisma,
-        },
-        {
-          provide: AssetService,
-          useValue: mockAssetService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<AssignmentService>(AssignmentService);
+    await setupTestModule();
   });
 
   afterEach(() => {

@@ -33,6 +33,11 @@ export class AssignmentDto {
   @ApiPropertyOptional()
   @Length(0, 256)
   note: string;
+
+  @IsDateString()
+  @ApiProperty()
+  @IsOptional()
+  updatedAt?: Date | string;
 }
 
 export enum UserSortKey {

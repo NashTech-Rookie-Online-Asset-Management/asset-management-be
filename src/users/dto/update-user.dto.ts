@@ -1,7 +1,7 @@
 import { AccountType, Gender } from '@prisma/client';
 import { IsNotEmpty, IsDateString, IsEnum, IsOptional } from 'class-validator';
 import { IsOlderThan18 } from '../../common/decorators';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Messages } from 'src/common/constants';
 
 export class UpdateUserDto {
@@ -10,7 +10,7 @@ export class UpdateUserDto {
   @IsDateString()
   @IsOlderThan18()
   @IsOptional()
-  dob: Date;
+  dob: Date | string;
 
   @ApiProperty()
   @IsNotEmpty({ message: Messages.USER.VALIDATE.JOINED_DATE })
@@ -29,4 +29,8 @@ export class UpdateUserDto {
   @IsEnum(AccountType, { message: Messages.USER.VALIDATE.LOCATION_INVALID })
   @IsOptional()
   type: AccountType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  updatedAt?: Date | string;
 }

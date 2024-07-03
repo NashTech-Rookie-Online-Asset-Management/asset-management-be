@@ -1,135 +1,23 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import {
-  Account,
   AccountType,
   AssetState,
   AssignmentState,
-  Gender,
   Location,
 } from '@prisma/client';
 import { Messages } from 'src/common/constants';
-import { AssetService } from 'src/asset/asset.service';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { AssignmentService } from 'src/assignment/assignment.service';
 import { BadRequestException } from '@nestjs/common';
-
-const createdUser: Account = {
-  id: 1,
-  firstName: 'John',
-  lastName: 'Doe',
-  fullName: 'John Doe',
-  gender: Gender.MALE,
-  location: Location.HCM,
-  password: '123456',
-  staffCode: 'ST001',
-  type: AccountType.ADMIN,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  joinedAt: new Date(),
-  dob: new Date(),
-  username: 'johndoe',
-  status: 'ACTIVE',
-};
-
-const assignmentDto = {
-  assetCode: 'AS001',
-  staffCode: 'ST001',
-  assignedDate: new Date().toLocaleString(),
-  note: null,
-};
-
-const updatedAssignedAsset = {
-  id: 2,
-  name: 'Laptop 2',
-  state: AssetState.AVAILABLE,
-  location: Location.HCM,
-};
-
-const assignedUser: Account = {
-  id: 2,
-  firstName: 'Jane',
-  lastName: 'Doe',
-  fullName: 'Jane Doe',
-  gender: Gender.MALE,
-  location: Location.HCM,
-  password: '123456',
-  staffCode: 'ST001',
-  type: AccountType.ADMIN,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  joinedAt: new Date(),
-  dob: new Date(),
-  username: 'johndoe',
-  status: 'ACTIVE',
-};
-
-const assignment = {
-  id: 1,
-  assetId: 1,
-  assignedById: 1,
-  assignedToId: 2,
-  note: null,
-  state: AssignmentState.WAITING_FOR_ACCEPTANCE,
-  assignedDate: new Date(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-
-  asset: {
-    assetCode: 'AS001',
-  },
-  assignedTo: {
-    location: Location.DN,
-  },
-};
+import { mockPrisma, service, setupTestModule } from './config/test-setup';
+import {
+  assignedUser,
+  assignment,
+  assignmentDto,
+  createdUser,
+  updatedAssignedAsset,
+} from './config/mock-data';
 
 describe('Assignment Service', () => {
-  let service: AssignmentService;
-  let mockPrisma: PrismaService;
-
-  const mockAssetService = {
-    updateState: jest.fn(),
-  };
-
   beforeAll(async () => {
-    mockPrisma = {
-      account: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-      },
-      asset: {
-        findMany: jest.fn(),
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        findFirst: jest.fn(),
-        count: jest.fn(),
-      },
-      assignment: {
-        create: jest.fn(),
-        findFirst: jest.fn(),
-        update: jest.fn(),
-        findUnique: jest.fn(),
-        findMany: jest.fn(),
-        count: jest.fn(),
-      },
-    } as any;
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        AssignmentService,
-        {
-          provide: PrismaService,
-          useValue: mockPrisma,
-        },
-        {
-          provide: AssetService,
-          useValue: mockAssetService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<AssignmentService>(AssignmentService);
+    await setupTestModule();
   });
 
   afterEach(() => {
