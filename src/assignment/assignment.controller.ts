@@ -22,6 +22,7 @@ import { UserType } from 'src/users/types';
 import {
   AssetPaginationDto,
   AssignmentDto,
+  AssignmentPaginationDto as AdminAssignmentPaginationDto,
   UserPaginationDto,
 } from './assignment.dto';
 import { AssignmentService } from './assignment.service';
@@ -41,8 +42,8 @@ export class AssignmentController extends BaseController {
 
   @Get()
   @Roles(AccountType.ADMIN)
-  getAll(@GetUser() user: Account) {
-    return this.assignmentService.getAll(user);
+  getAll(@GetUser() user: Account, @Query() dto: AdminAssignmentPaginationDto) {
+    return this.assignmentService.getAll(user, dto);
   }
 
   @Get(':id')

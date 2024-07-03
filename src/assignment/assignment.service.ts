@@ -23,6 +23,8 @@ import {
   AssetPaginationDto,
   AssetSortKey,
   AssignmentDto,
+  AssignmentPaginationDto as AdminAssignmentPaginationDto,
+  AssignmentSortKey as AdminAssignmentSortKey,
   UserPaginationDto,
 } from './assignment.dto';
 import {
@@ -37,40 +39,135 @@ export class AssignmentService {
     private readonly assetService: AssetService,
   ) {}
 
-  getAll(user: Account) {
-    return this.prismaService.assignment.findMany({
-      where: {
-        assignedBy: {
-          location: user.location,
-        },
+  async getAll(user: Account, dto: AdminAssignmentPaginationDto) {
+    let orderBy = {};
+    switch (dto.sortField) {
+      case AdminAssignmentSortKey.ASSET_CODE:
+        orderBy = {
+          asset: {
+            assetCode: dto.sortOrder,
+          },
+        };
+        break;
+      case AdminAssignmentSortKey.ASSET_NAME:
+        orderBy = {
+          asset: {
+            name: dto.sortOrder,
+          },
+        };
+        break;
+      case AdminAssignmentSortKey.ASSIGNED_TO:
+        orderBy = {
+          assignedTo: {
+            username: dto.sortOrder,
+          },
+        };
+        break;
+      case AdminAssignmentSortKey.ASSIGNED_BY:
+        orderBy = {
+          assignedBy: {
+            username: dto.sortOrder,
+          },
+        };
+        break;
+      default:
+        orderBy = {
+          [dto.sortField]: dto.sortOrder,
+        };
+        break;
+    }
+
+    const where = {
+      assignedBy: {
+        location: user.location,
       },
-      include: {
-        assignedBy: {
-          select: {
-            staffCode: true,
-            fullName: true,
-            type: true,
-            location: true,
+      AND: [
+        {
+          assignedDate: {
+            gte: new Date(dto.date),
           },
         },
-        asset: {
-          select: {
-            assetCode: true,
-            name: true,
-            category: true,
-            location: true,
+        {
+          state: {
+            in: dto.states,
           },
         },
-        assignedTo: {
-          select: {
-            staffCode: true,
-            fullName: true,
-            type: true,
-            location: true,
+      ],
+      OR: [
+        {
+          asset: {
+            OR: [
+              {
+                assetCode: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                name: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+            ],
           },
         },
+        {
+          assignedTo: {
+            username: {
+              contains: dto.search,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      ],
+    };
+
+    const [count, data] = await Promise.all([
+      this.prismaService.assignment.count({ where }),
+      this.prismaService.assignment.findMany({
+        where,
+        orderBy,
+        take: dto.take,
+        skip: dto.skip,
+        include: {
+          assignedBy: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+              location: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        totalPages: Math.ceil(count / dto.take),
+        totalCount: count,
       },
-    });
+    };
   }
 
   async getAvailableUser(user: Account, pagination: UserPaginationDto) {
@@ -103,46 +200,26 @@ export class AssignmentService {
           status: UserStatus.DISABLED,
         },
       ],
+      OR: [
+        {
+          fullName: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          staffCode: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+      ],
     };
 
     const [count, data] = await Promise.all([
-      this.prismaService.account.count({
-        where: {
-          ...where,
-          OR: [
-            {
-              fullName: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              staffCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-      }),
+      this.prismaService.account.count({ where }),
       this.prismaService.account.findMany({
-        where: {
-          ...where,
-          OR: [
-            {
-              fullName: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              staffCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
+        where,
         orderBy: [
           {
             [pagination.sortField]: pagination.sortOrder,
@@ -173,6 +250,20 @@ export class AssignmentService {
     const where = {
       state: AssetState.AVAILABLE,
       location: user.location,
+      OR: [
+        {
+          assetCode: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+      ],
     };
 
     const orderBy = [];
@@ -192,47 +283,11 @@ export class AssignmentService {
     }
 
     const [count, data] = await Promise.all([
-      this.prismaService.asset.count({
-        where: {
-          ...where,
-          OR: [
-            {
-              assetCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-      }),
+      this.prismaService.asset.count({ where }),
 
       this.prismaService.asset.findMany({
-        where: {
-          ...where,
-          OR: [
-            {
-              assetCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-
+        where,
         orderBy,
-
         include: {
           category: true,
         },
@@ -250,8 +305,8 @@ export class AssignmentService {
     };
   }
 
-  getOne(user: Account, id: number) {
-    return this.prismaService.assignment.findFirst({
+  async getOne(user: Account, id: number) {
+    const result = await this.prismaService.assignment.findFirst({
       where: {
         id,
         assignedBy: {
@@ -291,6 +346,11 @@ export class AssignmentService {
         },
       },
     });
+    if (!result)
+      throw new NotFoundException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    return result;
   }
 
   async create(createdUser: Account, dto: AssignmentDto) {
@@ -314,6 +374,34 @@ export class AssignmentService {
           asset: {
             connect: {
               assetCode: dto.assetCode,
+            },
+          },
+        },
+        include: {
+          assignedBy: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+              location: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
             },
           },
         },
@@ -367,6 +455,34 @@ export class AssignmentService {
         asset: {
           connect: {
             assetCode: dto.assetCode,
+          },
+        },
+      },
+      include: {
+        assignedBy: {
+          select: {
+            username: true,
+            staffCode: true,
+            fullName: true,
+            type: true,
+            location: true,
+          },
+        },
+        asset: {
+          select: {
+            assetCode: true,
+            name: true,
+            category: true,
+            location: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            username: true,
+            staffCode: true,
+            fullName: true,
+            type: true,
+            location: true,
           },
         },
       },
