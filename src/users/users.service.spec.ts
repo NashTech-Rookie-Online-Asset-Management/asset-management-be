@@ -1,6 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
-import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { CreateUserDto, FindAllUsersSortKey, UpdateUserDto } from './dto';
 import {
@@ -481,6 +486,14 @@ describe('UsersService', () => {
     });
 
     it('should throw BadRequestException on error', async () => {
+      const error = {
+        message: 'Update failed',
+        response: {
+          error: 'Conflict',
+          statusCode: HttpStatus.BAD_REQUEST,
+        },
+        statusCode: HttpStatus.BAD_REQUEST,
+      };
       const userStaffCode = 'SD0002';
       const updateUserDto: UpdateUserDto = {
         dob: new Date('1990-01-01'),
@@ -500,12 +513,12 @@ describe('UsersService', () => {
 
       jest.spyOn(service as any, 'findUser').mockResolvedValue(existingUser);
       (mockPrismaService.account.update as jest.Mock).mockRejectedValue(
-        new Error('Update failed'),
+        new HttpException(error, error.statusCode),
       );
 
       await expect(
         service.update(adminMockup, userStaffCode, updateUserDto),
-      ).rejects.toThrow(new BadRequestException('Update failed'));
+      ).rejects.toThrow(HttpException);
     });
 
     it('should throw UnauthorizedException if user does not exist', async () => {
