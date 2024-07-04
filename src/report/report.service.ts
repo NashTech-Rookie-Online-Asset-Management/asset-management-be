@@ -29,7 +29,7 @@ export class ReportService {
         SUM(CASE WHEN a."state" = 'RECYCLED' THEN 1 ELSE 0 END) AS "recycled"
       FROM public."Asset" a
       JOIN public."Category" c ON a."categoryId" = c."id"
-      WHERE c."name" LIKE '%${queryParams.search}%'
+      WHERE c."name" ILIKE '%${queryParams.search}%'
       GROUP BY c."name"
       ORDER BY "${queryParams.sortField}" ${queryParams.sortOrder}
       LIMIT ${queryParams.take ?? 'ALL'} 
