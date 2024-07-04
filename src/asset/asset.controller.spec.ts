@@ -105,6 +105,7 @@ describe('AssetController', () => {
         installedDate: new Date(),
         state: AssetState.AVAILABLE,
         location: Location.HCM,
+        updatedAt: new Date(),
         category: {
           id: 1,
           name: 'Category 1',

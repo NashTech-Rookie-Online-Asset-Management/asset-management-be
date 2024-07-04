@@ -145,6 +145,7 @@ export class AssetService {
             name: true,
           },
         },
+        updatedAt: true,
         installedDate: true,
         state: true,
         location: true,
