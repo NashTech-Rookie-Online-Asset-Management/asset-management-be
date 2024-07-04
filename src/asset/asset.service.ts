@@ -328,7 +328,15 @@ export class AssetService {
 
       return updatedAsset;
     } catch (error) {
-      throw new InternalServerErrorException(error.message);
+      throw new HttpException(
+        {
+          message: error.message,
+          error: error.response.error,
+          statusCode: error.response.statusCode,
+        },
+        error.getStatus(),
+        error.getResponse(),
+      );
     } finally {
       this.lockService.releaseLock(`asset-${id}`);
     }
