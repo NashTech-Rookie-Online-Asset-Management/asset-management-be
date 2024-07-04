@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
-import { AuthPayloadDto } from './dto/auth-payload.dto';
+import { AuthController } from '../auth.controller';
+import { AuthService } from '../auth.service';
+import { AuthPayloadDto } from '../dto/auth-payload.dto';
 import { UnauthorizedException } from '@nestjs/common';
-import { LoginResponseDto } from './dto/login-response.dto';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { LoginResponseDto } from '../dto/login-response.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { Response } from 'express';
 import { Cookies } from 'src/common/constants';
 const mockAuthService = {

@@ -1,12 +1,12 @@
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from './../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
+import { AuthService } from '../auth.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UnauthorizedException } from '@nestjs/common';
-import { ChangePasswordDto } from './dto/change-password.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ChangePasswordDto } from '../dto/change-password.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
 //mocking the prisma service
 const mockPrismaService = {
   account: {

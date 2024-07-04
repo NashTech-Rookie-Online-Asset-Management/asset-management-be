@@ -5,7 +5,7 @@ import {
   Location,
 } from '@prisma/client';
 import { Messages } from 'src/common/constants';
-import { HttpException } from '@nestjs/common';
+import { HttpException, ConflictException } from '@nestjs/common';
 import { mockPrisma, service, setupTestModule } from './config/test-setup';
 import {
   assignedUser,
@@ -385,5 +385,70 @@ describe('Assignment Service', () => {
     expect(await service.update(createdUser, 1, assignmentDto)).toEqual(
       assignmentDto,
     );
+  });
+
+  it('Should not edit assignment if assignment is editting', async () => {
+    (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValue(
+      assignment,
+    );
+
+    (mockPrisma.account.findUnique as jest.Mock).mockResolvedValue(
+      assignedUser,
+    );
+
+    (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue(
+      updatedAssignedAsset,
+    );
+
+    (mockPrisma.assignment.update as jest.Mock).mockResolvedValue(
+      assignmentDto,
+    );
+
+    try {
+      await Promise.all([
+        service.update(createdUser, 1, assignmentDto),
+        service.update(createdUser, 1, assignmentDto),
+        service.update(createdUser, 1, assignmentDto),
+        service.update(createdUser, 1, assignmentDto),
+      ]);
+      fail('Should not reach here');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ConflictException);
+      expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.CONCURRENT_UPDATE);
+    }
+  });
+
+  it('Should not edit assignment if assignment is editted before by another user', async () => {
+    const date_1 = new Date('2021-01-01');
+    const date_2 = new Date('2021-01-02');
+
+    (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValue({
+      ...assignment,
+      updatedAt: date_2,
+    });
+
+    (mockPrisma.account.findUnique as jest.Mock).mockResolvedValue(
+      assignedUser,
+    );
+
+    (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValue(
+      updatedAssignedAsset,
+    );
+
+    (mockPrisma.assignment.update as jest.Mock).mockResolvedValue(
+      assignmentDto,
+    );
+
+    try {
+      await service.update(createdUser, 1, {
+        ...assignmentDto,
+        updatedAt: date_1,
+      });
+      fail('Should not reach here');
+    } catch (error) {
+      expect(error).toBeInstanceOf(HttpException);
+      expect(error.status).toBe(400);
+      expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.DATA_EDITED);
+    }
   });
 });
