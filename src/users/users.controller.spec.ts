@@ -235,7 +235,7 @@ describe('UsersController', () => {
       location: Location.HCM,
     };
     it('should return a user successfully', async () => {
-      const username = 'johnd';
+      const staffCode = 'SD0001';
 
       const result = {
         id: '1',
@@ -250,8 +250,8 @@ describe('UsersController', () => {
 
       mockUsersService.selectOne.mockResolvedValue(result);
 
-      expect(await controller.getUser(username, user)).toEqual(result);
-      expect(usersService.selectOne).toHaveBeenCalledWith(username, user);
+      expect(await controller.getUser(staffCode, user)).toEqual(result);
+      expect(usersService.selectOne).toHaveBeenCalledWith(staffCode, user);
     });
 
     it('should throw an error if retrieving the user fails', async () => {

@@ -361,13 +361,13 @@ describe('UsersService', () => {
       location: Location.HCM,
     };
     it('should get user', async () => {
-      const username = 'test_user';
+      const staffCode = 'SD0001';
       const expected = {
         id: 2,
-        staffCode: 'SD0001',
+        staffCode: staffCode,
         firstName: 'John',
         lastName: 'Doe',
-        username: username,
+        username: 'johnd',
         location: Location.HCM,
       };
 
@@ -375,11 +375,11 @@ describe('UsersService', () => {
         expected,
       );
 
-      const result = await service.selectOne(username, user);
+      const result = await service.selectOne(staffCode, user);
 
       expect(result).toEqual(expected);
       expect(mockPrismaService.account.findFirst).toHaveBeenCalledWith({
-        where: { username },
+        where: { staffCode },
         select: {
           id: true,
           staffCode: true,
