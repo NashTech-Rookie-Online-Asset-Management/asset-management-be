@@ -3,6 +3,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -182,7 +183,15 @@ export class UsersService {
       });
       return userUpdated;
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new HttpException(
+        {
+          message: error.message,
+          error: error.response.error,
+          statusCode: error.response.statusCode,
+        },
+        error.getStatus(),
+        error.getResponse(),
+      );
     } finally {
       this.lockService.releaseLock(`user-${userStaffCode}`);
     }

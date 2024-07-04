@@ -5,7 +5,7 @@ import {
   Location,
 } from '@prisma/client';
 import { Messages } from 'src/common/constants';
-import { BadRequestException } from '@nestjs/common';
+import { HttpException } from '@nestjs/common';
 import { mockPrisma, service, setupTestModule } from './config/test-setup';
 import {
   assignedUser,
@@ -32,7 +32,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
       );
@@ -49,7 +49,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
       );
@@ -66,7 +66,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
       );
@@ -84,7 +84,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_NOT_FOUND);
     }
   });
@@ -103,7 +103,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_IS_ROOT);
     }
   });
@@ -123,7 +123,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.ASSET_NOT_FOUND);
     }
   });
@@ -150,7 +150,7 @@ describe('Assignment Service', () => {
       });
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_AVAILABLE,
       );
@@ -179,7 +179,7 @@ describe('Assignment Service', () => {
       });
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_AVAILABLE,
       );
@@ -208,7 +208,7 @@ describe('Assignment Service', () => {
       });
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_AVAILABLE,
       );
@@ -237,7 +237,7 @@ describe('Assignment Service', () => {
       });
       expect(true).toBe(false);
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_AVAILABLE,
       );
@@ -262,7 +262,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_NOT_THE_SAME);
     }
   });
@@ -285,7 +285,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.USER_DISABLED);
     }
   });
@@ -308,7 +308,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.USER_NOT_IN_SAME_LOCATION,
       );
@@ -333,7 +333,7 @@ describe('Assignment Service', () => {
       await service.update(createdUser, 1, assignmentDto);
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_IN_SAME_LOCATION,
       );
@@ -360,7 +360,7 @@ describe('Assignment Service', () => {
       });
       fail('Should not reach here');
     } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error).toBeInstanceOf(HttpException);
       expect(error.message).toBe(Messages.ASSIGNMENT.FAILED.DATE_IN_THE_PAST);
     }
   });
