@@ -272,7 +272,7 @@ export class AssetService {
       if (updatedAt) {
         const newDate = new Date(updatedAt);
         if (asset.updatedAt.getTime() !== newDate.getTime()) {
-          throw new ConflictException(Messages.ASSET.FAILED.DATA_EDITED);
+          throw new BadRequestException(Messages.ASSET.FAILED.DATA_EDITED);
         }
       }
 
@@ -323,15 +323,7 @@ export class AssetService {
 
       return updatedAsset;
     } catch (error) {
-      throw new HttpException(
-        {
-          message: error.message,
-          error: error.response.error,
-          statusCode: error.response.statusCode,
-        },
-        error.getStatus(),
-        error.getResponse(),
-      );
+      throw new InternalServerErrorException(error.message);
     } finally {
       this.lockService.releaseLock(`asset-${id}`);
     }

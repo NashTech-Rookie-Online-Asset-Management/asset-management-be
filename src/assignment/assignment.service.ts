@@ -4,7 +4,6 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
-  HttpException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -516,15 +515,7 @@ export class AssignmentService {
         },
       });
     } catch (error) {
-      throw new HttpException(
-        {
-          message: error.message,
-          error: error.response.error,
-          statusCode: error.response.statusCode,
-        },
-        error.getStatus(),
-        error.getResponse(),
-      );
+      throw new BadRequestException(error.message);
     } finally {
       await this.LockService.releaseLock(`assignment-${id}`);
     }
