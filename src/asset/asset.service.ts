@@ -9,11 +9,11 @@ import {
 } from '@nestjs/common';
 import { AccountType, AssetState, Location } from '@prisma/client';
 import { Messages } from 'src/common/constants';
+import { LockService } from 'src/lock/lock.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserType } from 'src/users/types';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { LockService } from 'src/lock/lock.service';
 
 @Injectable()
 export class AssetService {
@@ -231,6 +231,11 @@ export class AssetService {
             select: {
               name: true,
               prefix: true,
+            },
+          },
+          assignments: {
+            select: {
+              id: true,
             },
           },
         },

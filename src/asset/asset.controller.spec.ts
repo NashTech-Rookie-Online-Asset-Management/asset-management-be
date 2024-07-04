@@ -6,11 +6,11 @@ import { AssetService } from './asset.service';
 import { AccountType, AssetState, Location, UserStatus } from '@prisma/client';
 import { Messages } from 'src/common/constants';
 import { RolesGuard } from 'src/common/guards/role.guard';
+import { ReportPaginationDto } from 'src/report/dto';
+import { ReportService } from 'src/report/report.service';
 import { UserType } from 'src/users/types';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
 import { CreateAssetDto } from './dto/create-asset.dto';
-import { ReportService } from 'src/report/report.service';
-import { ReportPaginationDto } from 'src/report/dto';
 
 const adminMockup: UserType = {
   id: 1,
@@ -140,6 +140,7 @@ describe('AssetController', () => {
           name: 'Laptop',
           prefix: 'L',
         },
+        assignments: [],
       };
 
       jest.spyOn(service, 'create').mockResolvedValue(result);
