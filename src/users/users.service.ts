@@ -442,12 +442,12 @@ export class UsersService {
   }
 
   async selectOne(
-    username: string,
+    staffCode: string,
     liveUser: Partial<Account>,
   ): Promise<Partial<Account>> {
     const user = await this.prismaService.account.findFirst({
       where: {
-        username,
+        staffCode,
       },
       select: {
         id: true,

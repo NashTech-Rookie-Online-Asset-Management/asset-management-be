@@ -57,12 +57,12 @@ export class UsersController extends BaseController {
     return this.usersService.selectMany(username, admin, dto);
   }
 
-  @Get(':username')
+  @Get(':staffCode')
   async getUser(
-    @Param('username') username: string,
+    @Param('staffCode') staffCode: string,
     @User() user: Partial<Account>,
   ) {
-    return this.usersService.selectOne(username, user);
+    return this.usersService.selectOne(staffCode, user);
   }
 
   @Delete(':staffCode')
