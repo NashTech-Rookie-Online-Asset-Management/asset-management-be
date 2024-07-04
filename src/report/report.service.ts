@@ -65,7 +65,7 @@ export class ReportService {
     };
   }
 
-  async createFile(format: FileFormat) {
+  async export(format: FileFormat) {
     format = FileFormat.EXCEL;
     const queryParams: ReportPaginationDto = {
       skip: 0,

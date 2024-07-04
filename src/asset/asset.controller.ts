@@ -58,7 +58,7 @@ export class AssetController extends BaseController {
     @Query('format') format: FileFormat,
     @Res() res: Response,
   ) {
-    const buffer = (await this.reportService.createFile(format)) as Buffer;
+    const buffer = (await this.reportService.export(format)) as Buffer;
 
     return res
       .set(

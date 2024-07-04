@@ -17,6 +17,7 @@ export const mockAssetService = {
 };
 export const mockReportService = {
   selectMany: jest.fn(),
+  export: jest.fn(),
 };
 export const setupTestController = async () => {
   const module: TestingModule = await Test.createTestingModule({
