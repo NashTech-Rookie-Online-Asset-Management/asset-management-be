@@ -20,7 +20,23 @@ describe('Report service', () => {
   });
 
   describe('Find all', () => {
-    it('Should return an array of category groups', async () => {
+    it('Should return paginated report', async () => {
+      const dto: ReportPaginationDto = {
+        skip: 0,
+        take: 1,
+      };
+
+      (prismaService.$queryRawUnsafe as jest.Mock).mockResolvedValueOnce(
+        report.data,
+      );
+
+      (prismaService.asset.findMany as jest.Mock).mockResolvedValueOnce(assets);
+
+      const res = await reportService.selectMany(dto);
+
+      expect(res).toStrictEqual(report);
+    });
+    it('Should return complete report', async () => {
       const dto: ReportPaginationDto = {
         skip: 0,
       };

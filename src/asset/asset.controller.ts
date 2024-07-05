@@ -60,12 +60,11 @@ export class AssetController extends BaseController {
   ) {
     const buffer = (await this.reportService.export(format)) as Buffer;
 
-    return res
-      .set(
-        'Content-Disposition',
-        `attachment; filename=OAM Report ${formatDate(new Date())}.${format}`,
-      )
-      .send(buffer);
+    res.set(
+      'Content-Disposition',
+      `attachment; filename=OAM Report ${formatDate(new Date())}.${format}`,
+    );
+    return res.send(buffer);
   }
 
   @Get(':id')

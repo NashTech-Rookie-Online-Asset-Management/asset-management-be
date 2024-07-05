@@ -1,4 +1,9 @@
-import { reportService, setupTestController } from './config/test-setup';
+import {
+  controller,
+  reportService,
+  expressResponse,
+  setupTestController,
+} from './config/test-setup';
 import { FileFormat } from 'src/common/constants/file-format';
 
 describe('AssetController', () => {
@@ -13,27 +18,18 @@ describe('AssetController', () => {
 
   describe('exportReport', () => {
     it('should call reportService.export with correct parameters', async () => {
-      jest.spyOn(reportService, 'selectMany').mockResolvedValue({
-        data: [
-          {
-            categoryName: 'Laptop',
-            total: 0,
-            assigned: 0,
-            available: 0,
-            notAvailable: 0,
-            waitingForRecycling: 0,
-            recycled: 0,
-          },
-        ],
-        pagination: {
-          totalPages: 0,
-          totalCount: 0,
-        },
-      });
+      const mockBuffer = Buffer.from('mocked file content');
 
-      await reportService.export(FileFormat.EXCEL);
+      jest.spyOn(reportService, 'export').mockResolvedValue(mockBuffer);
+
+      await controller.getReportFile(FileFormat.EXCEL, expressResponse);
 
       expect(reportService.export).toHaveBeenCalledWith(FileFormat.EXCEL);
+      // expect(expressResponse.setHeader).toHaveBeenCalledWith(
+      //   'Content-Disposition',
+      //   expect.stringContaining('attachment; filename=OAM Report '),
+      // );
+      // expect(mockResponse.send).toHaveBeenCalledWith(mockBuffer);
     });
   });
 });

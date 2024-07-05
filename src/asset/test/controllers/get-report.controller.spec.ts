@@ -1,5 +1,9 @@
 import { ReportPaginationDto } from 'src/report/dto';
-import { reportService, setupTestController } from './config/test-setup';
+import {
+  controller,
+  reportService,
+  setupTestController,
+} from './config/test-setup';
 
 describe('AssetController', () => {
   beforeEach(async () => {
@@ -16,7 +20,7 @@ describe('AssetController', () => {
       const dto: ReportPaginationDto = {
         skip: 0,
       };
-      jest.spyOn(reportService, 'selectMany').mockResolvedValue({
+      const result = {
         data: [
           {
             categoryName: 'Laptop',
@@ -32,10 +36,12 @@ describe('AssetController', () => {
           totalPages: 0,
           totalCount: 0,
         },
-      });
+      };
+      jest.spyOn(reportService, 'selectMany').mockResolvedValue(result);
 
-      await reportService.selectMany(dto);
+      const res = await controller.getReport(dto);
 
+      expect(res).toBe(result);
       expect(reportService.selectMany).toHaveBeenCalledWith(dto);
     });
   });

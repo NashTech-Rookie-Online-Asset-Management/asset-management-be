@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { MAX_PAGE_SIZE } from 'src/common/constants';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 export enum FindAllReportItemsSortKey {
@@ -13,6 +15,14 @@ export enum FindAllReportItemsSortKey {
 }
 
 export class ReportPaginationDto extends PaginationDto {
+  @IsOptional()
+  @ApiPropertyOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(MAX_PAGE_SIZE)
+  readonly take?: number;
+
   @IsOptional()
   @IsEnum(FindAllReportItemsSortKey)
   @ApiPropertyOptional({
