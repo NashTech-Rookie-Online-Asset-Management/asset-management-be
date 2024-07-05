@@ -27,7 +27,19 @@ export const setupTestModule = async () => {
       AuthService,
       { provide: PrismaService, useValue: mockPrismaService },
       { provide: JwtService, useValue: mockJwtService },
-      ConfigService,
+      {
+        provide: ConfigService,
+        useValue: {
+          get: jest.fn().mockImplementation((key: string) => {
+            if (key === 'EXPIRED_DURATION.ACCESS_TOKEN') {
+              return '1h';
+            }
+            if (key === 'EXPIRED_DURATION.REFRESH_TOKEN') {
+              return '7d';
+            }
+          }),
+        },
+      },
     ],
   }).compile();
 

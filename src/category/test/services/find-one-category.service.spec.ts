@@ -1,3 +1,4 @@
+import { Messages } from 'src/common/constants';
 import {
   mockPrismaService,
   service,
@@ -21,6 +22,15 @@ describe('CategoryService', () => {
       );
 
       expect(await service.findOne(1)).toEqual(category);
+    });
+
+    it('should throw an error if category not found', async () => {
+      (mockPrismaService.category.findUnique as jest.Mock).mockResolvedValue(
+        null,
+      );
+      await expect(service.findOne(1)).rejects.toThrowError(
+        Messages.CATEGORY.FAILED.NOT_FOUND,
+      );
     });
   });
 });

@@ -1,4 +1,4 @@
-import { AccountType, Location, UserStatus } from '@prisma/client';
+import { AccountType, Gender, Location, UserStatus } from '@prisma/client';
 import { CreateAssetDto } from 'src/asset/dto';
 import { UserType } from 'src/users/types';
 import * as bcrypt from 'bcryptjs';
@@ -26,6 +26,23 @@ export const mockUser = {
   staffCode: 'SD0001',
   status: 'ACTIVE',
   type: 'USER',
+};
+export const mockUserPayload = {
+  username: 'testuser',
+  firstName: 'John',
+  lastName: 'Doe',
+  fullName: 'John Doe',
+  dob: new Date(),
+  gender: Gender.FEMALE,
+  password: bcrypt.hash('oldpassword', 10) as unknown as string,
+  id: 1,
+  staffCode: 'SD0001',
+  status: UserStatus.ACTIVE,
+  type: AccountType.STAFF,
+  joinedAt: new Date(),
+  location: Location.HCM,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 export const changePasswordDto: ChangePasswordDto = {

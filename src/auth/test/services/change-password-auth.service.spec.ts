@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import {
   mockPrismaService,
   service,
@@ -46,6 +46,31 @@ describe('AuthService', () => {
         where: { staffCode: mockUser.staffCode },
         data: { password: expect.any(String), status: 'ACTIVE' },
       });
+    });
+
+    it('should throw BadRequestException if new password is the same as the old password', async () => {
+      const changePasswordFirstTimeDto: ChangePasswordDto = {
+        oldPassword: 'oldpassword',
+        newPassword: 'oldpassword',
+      };
+      const mockUser = {
+        username: 'testuser',
+        password: await bcrypt.hash('oldpassword', 10),
+        id: 1,
+        staffCode: 'SD0001',
+        status: 'ACTIVE',
+        type: 'USER',
+      };
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
+        mockUser,
+      );
+
+      await expect(
+        service.changePassword(mockUser.staffCode, changePasswordFirstTimeDto),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockPrismaService.account.update).not.toHaveBeenCalled();
     });
 
     it('should throw UnauthorizedException if old password is incorrect', async () => {

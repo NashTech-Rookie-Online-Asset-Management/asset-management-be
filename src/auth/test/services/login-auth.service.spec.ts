@@ -6,6 +6,7 @@ import {
   setupTestModule,
 } from './config/test-setup';
 import * as bcrypt from 'bcryptjs';
+import { mockUserPayload } from './config/mock-data';
 describe('AuthService', () => {
   beforeEach(async () => {
     await setupTestModule();
@@ -113,5 +114,56 @@ describe('AuthService', () => {
       where: { username: authPayload.username },
     });
     expect(mockJwtService.signAsync).not.toHaveBeenCalled();
+  });
+
+  it('should generate login response with access and refresh tokens', async () => {
+    const signAsyncSpy = jest
+      .spyOn(mockJwtService, 'signAsync')
+      .mockResolvedValueOnce('accessToken')
+      .mockResolvedValueOnce('refreshToken');
+
+    const result = await service['generateLoginResponse'](mockUserPayload);
+
+    expect(result).toBeDefined();
+    expect(result.accessToken).toBe('accessToken');
+    expect(result.refreshToken).toBe('refreshToken');
+    expect(result.payload).toEqual({
+      username: mockUserPayload.username,
+      sub: mockUserPayload.id,
+      staffCode: mockUserPayload.staffCode,
+      status: mockUserPayload.status,
+      type: mockUserPayload.type,
+      location: mockUserPayload.location,
+    });
+
+    expect(signAsyncSpy).toHaveBeenCalledTimes(2);
+    expect(signAsyncSpy).toHaveBeenNthCalledWith(
+      1,
+      {
+        username: mockUserPayload.username,
+        sub: mockUserPayload.id,
+        staffCode: mockUserPayload.staffCode,
+        status: mockUserPayload.status,
+        type: mockUserPayload.type,
+        location: mockUserPayload.location,
+      },
+      {
+        expiresIn: '1h',
+      },
+    );
+    expect(signAsyncSpy).toHaveBeenNthCalledWith(
+      2,
+      {
+        username: mockUserPayload.username,
+        sub: mockUserPayload.id,
+        staffCode: mockUserPayload.staffCode,
+        status: mockUserPayload.status,
+        type: mockUserPayload.type,
+        location: mockUserPayload.location,
+      },
+      {
+        expiresIn: '7d',
+      },
+    );
   });
 });

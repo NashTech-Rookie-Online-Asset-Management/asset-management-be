@@ -39,12 +39,7 @@ describe('AuthService', () => {
 
       expect(result.accessToken).toBe('mocked.token');
       expect(result.refreshToken).toBe('mocked.token');
-      expect(mockJwtService.verify).toHaveBeenCalledWith(
-        'valid_refresh_token',
-        {
-          ignoreExpiration: true,
-        },
-      );
+      expect(mockJwtService.verify).toHaveBeenCalledWith('valid_refresh_token');
       expect(mockPrismaService.account.findUnique).toHaveBeenCalledWith({
         where: { staffCode: mockUser.staffCode },
       });
@@ -66,8 +61,21 @@ describe('AuthService', () => {
 
       expect(mockJwtService.verify).toHaveBeenCalledWith(
         'invalid_refresh_token',
-        { ignoreExpiration: true },
       );
+      expect(mockPrismaService.account.findUnique).not.toHaveBeenCalled();
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException if refresh token is missing', async () => {
+      const refreshTokenDto: RefreshTokenDto = {
+        refreshToken: undefined,
+      };
+
+      await expect(service.refresh(refreshTokenDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      expect(mockJwtService.verify).not.toHaveBeenCalled();
       expect(mockPrismaService.account.findUnique).not.toHaveBeenCalled();
       expect(mockJwtService.signAsync).not.toHaveBeenCalled();
     });
@@ -88,12 +96,7 @@ describe('AuthService', () => {
         UnauthorizedException,
       );
 
-      expect(mockJwtService.verify).toHaveBeenCalledWith(
-        'valid_refresh_token',
-        {
-          ignoreExpiration: true,
-        },
-      );
+      expect(mockJwtService.verify).toHaveBeenCalledWith('valid_refresh_token');
       expect(mockPrismaService.account.findUnique).toHaveBeenCalledWith({
         where: { staffCode: 'nonexistentStaffCode' },
       });

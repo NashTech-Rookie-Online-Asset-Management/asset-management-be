@@ -1,3 +1,4 @@
+import { Messages } from 'src/common/constants';
 import {
   mockPrismaService,
   service,
@@ -31,6 +32,25 @@ describe('CategoryService', () => {
       expect(mockPrismaService.category.delete).toHaveBeenCalledWith({
         where: { id: 1 },
       });
+    });
+
+    it('should throw an error if category not found', async () => {
+      (mockPrismaService.category.findFirst as jest.Mock).mockResolvedValue(
+        null,
+      );
+      await expect(service.remove(1)).rejects.toThrow(
+        Messages.CATEGORY.FAILED.NOT_FOUND,
+      );
+    });
+
+    it('should throw an error if category is assigned to an asset', async () => {
+      const category = { id: 1, name: 'Laptop', prefix: 'LP', assets: [1] };
+      (mockPrismaService.category.findFirst as jest.Mock).mockResolvedValue(
+        category,
+      );
+      await expect(service.remove(1)).rejects.toThrow(
+        Messages.CATEGORY.FAILED.CATEGORY_CAN_NOT_BE_DELETED,
+      );
     });
   });
 });
