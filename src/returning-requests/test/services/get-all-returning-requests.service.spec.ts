@@ -1,11 +1,11 @@
+import { BadRequestException } from '@nestjs/common';
 import { Location, RequestState } from '@prisma/client';
-import { prismaService, service, setupTestModule } from './config/test-setup';
+import { Messages, Order } from 'src/common/constants';
 import {
   FindAllReturningRequestsSortKey,
   ReturningRequestPageOptions,
 } from 'src/returning-requests/dto';
-import { BadRequestException } from '@nestjs/common';
-import { Messages, Order } from 'src/common/constants';
+import { prismaService, service, setupTestModule } from './config/test-setup';
 
 describe('ReturningRequestsService', () => {
   beforeEach(async () => {
@@ -30,6 +30,37 @@ describe('ReturningRequestsService', () => {
     const startDate = new Date(dto.returnedDate);
     const endDate = new Date(dto.returnedDate);
     endDate.setDate(endDate.getDate() + 1);
+
+    const conditions = {
+      select: {
+        id: true,
+        assignment: {
+          select: {
+            asset: {
+              select: {
+                assetCode: true,
+                name: true,
+              },
+            },
+            assignedDate: true,
+          },
+        },
+        requestedBy: {
+          select: {
+            username: true,
+          },
+        },
+        acceptedBy: {
+          select: {
+            username: true,
+          },
+        },
+        returnedDate: true,
+        state: true,
+      },
+      take: dto.take,
+      skip: (dto.page - 1) * dto.take,
+    };
 
     it('shold throw BadRequestException if location is null', async () => {
       await expect(service.getAll(null, dto)).rejects.toThrow(
@@ -86,34 +117,7 @@ describe('ReturningRequestsService', () => {
             },
           },
         },
-        select: {
-          id: true,
-          assignment: {
-            select: {
-              asset: {
-                select: {
-                  assetCode: true,
-                  name: true,
-                },
-              },
-              assignedDate: true,
-            },
-          },
-          requestedBy: {
-            select: {
-              username: true,
-            },
-          },
-          acceptedBy: {
-            select: {
-              username: true,
-            },
-          },
-          returnedDate: true,
-          state: true,
-        },
-        take: dto.take,
-        skip: (dto.page - 1) * dto.take,
+        ...conditions,
       });
 
       expect(result).toEqual({
@@ -263,34 +267,7 @@ describe('ReturningRequestsService', () => {
             },
           },
         },
-        select: {
-          id: true,
-          assignment: {
-            select: {
-              asset: {
-                select: {
-                  assetCode: true,
-                  name: true,
-                },
-              },
-              assignedDate: true,
-            },
-          },
-          requestedBy: {
-            select: {
-              username: true,
-            },
-          },
-          acceptedBy: {
-            select: {
-              username: true,
-            },
-          },
-          returnedDate: true,
-          state: true,
-        },
-        take: dto.take,
-        skip: (dto.page - 1) * dto.take,
+        ...conditions,
       });
 
       expect(result).toEqual({
@@ -338,34 +315,7 @@ describe('ReturningRequestsService', () => {
             },
           },
         },
-        select: {
-          id: true,
-          assignment: {
-            select: {
-              asset: {
-                select: {
-                  assetCode: true,
-                  name: true,
-                },
-              },
-              assignedDate: true,
-            },
-          },
-          requestedBy: {
-            select: {
-              username: true,
-            },
-          },
-          acceptedBy: {
-            select: {
-              username: true,
-            },
-          },
-          returnedDate: true,
-          state: true,
-        },
-        take: dto.take,
-        skip: (dto.page - 1) * dto.take,
+        ...conditions,
       });
 
       expect(result).toEqual({
@@ -409,34 +359,7 @@ describe('ReturningRequestsService', () => {
             },
           },
         },
-        select: {
-          id: true,
-          assignment: {
-            select: {
-              asset: {
-                select: {
-                  assetCode: true,
-                  name: true,
-                },
-              },
-              assignedDate: true,
-            },
-          },
-          requestedBy: {
-            select: {
-              username: true,
-            },
-          },
-          acceptedBy: {
-            select: {
-              username: true,
-            },
-          },
-          returnedDate: true,
-          state: true,
-        },
-        take: dto.take,
-        skip: (dto.page - 1) * dto.take,
+        ...conditions,
       });
 
       expect(result).toEqual({
@@ -472,34 +395,119 @@ describe('ReturningRequestsService', () => {
             },
           },
         },
-        select: {
-          id: true,
-          assignment: {
-            select: {
-              asset: {
-                select: {
-                  assetCode: true,
-                  name: true,
-                },
-              },
-              assignedDate: true,
-            },
-          },
-          requestedBy: {
-            select: {
-              username: true,
-            },
-          },
-          acceptedBy: {
-            select: {
-              username: true,
-            },
-          },
-          returnedDate: true,
-          state: true,
+        ...conditions,
+      });
+
+      expect(result).toEqual({
+        data: mockReturningRequests,
+        pagination: {
+          totalPages: Math.ceil(mockTotalCount / dto.take),
+          totalCount: mockTotalCount,
         },
-        take: dto.take,
-        skip: (dto.page - 1) * dto.take,
+      });
+    });
+
+    it('should return returning requests sorted by assigned date query', async () => {
+      const location = Location.HCM;
+
+      // Mocking PrismaService responses
+      const mockReturningRequests = [{ id: 1, location }];
+      const mockTotalCount = 1;
+      (prismaService.returningRequest.findMany as jest.Mock).mockResolvedValue(
+        mockReturningRequests,
+      );
+      (prismaService.returningRequest.count as jest.Mock).mockResolvedValue(
+        mockTotalCount,
+      );
+
+      const result = await service.getAll(location, {
+        ...dto,
+        sortField: FindAllReturningRequestsSortKey.ASSIGNED_DATE,
+        skip: 0,
+      });
+
+      expect(prismaService.returningRequest.findMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({}),
+        orderBy: {
+          assignment: {
+            assignedDate: dto.sortOrder,
+          },
+        },
+        ...conditions,
+      });
+
+      expect(result).toEqual({
+        data: mockReturningRequests,
+        pagination: {
+          totalPages: Math.ceil(mockTotalCount / dto.take),
+          totalCount: mockTotalCount,
+        },
+      });
+    });
+
+    it('should return returning requests sorted by accepted by query', async () => {
+      const location = Location.HCM;
+
+      // Mocking PrismaService responses
+      const mockReturningRequests = [{ id: 1, location }];
+      const mockTotalCount = 1;
+      (prismaService.returningRequest.findMany as jest.Mock).mockResolvedValue(
+        mockReturningRequests,
+      );
+      (prismaService.returningRequest.count as jest.Mock).mockResolvedValue(
+        mockTotalCount,
+      );
+
+      const result = await service.getAll(location, {
+        ...dto,
+        sortField: FindAllReturningRequestsSortKey.ACCEPTED_BY,
+        skip: 0,
+      });
+
+      expect(prismaService.returningRequest.findMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({}),
+        orderBy: {
+          acceptedBy: {
+            username: dto.sortOrder,
+          },
+        },
+        ...conditions,
+      });
+
+      expect(result).toEqual({
+        data: mockReturningRequests,
+        pagination: {
+          totalPages: Math.ceil(mockTotalCount / dto.take),
+          totalCount: mockTotalCount,
+        },
+      });
+    });
+
+    it('should return returning requests sorted by state query', async () => {
+      const location = Location.HCM;
+
+      // Mocking PrismaService responses
+      const mockReturningRequests = [{ id: 1, location }];
+      const mockTotalCount = 1;
+      (prismaService.returningRequest.findMany as jest.Mock).mockResolvedValue(
+        mockReturningRequests,
+      );
+      (prismaService.returningRequest.count as jest.Mock).mockResolvedValue(
+        mockTotalCount,
+      );
+
+      const result = await service.getAll(location, {
+        ...dto,
+        sortField: FindAllReturningRequestsSortKey.STATE,
+        skip: 0,
+      });
+
+      expect(prismaService.returningRequest.findMany).toHaveBeenCalledWith({
+        where: expect.objectContaining({}),
+        orderBy: {
+          state: dto.sortOrder,
+        },
+        ...conditions,
       });
 
       expect(result).toEqual({
