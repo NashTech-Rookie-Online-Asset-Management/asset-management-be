@@ -5,6 +5,7 @@ import {
   AssignmentState,
   Gender,
   Location,
+  RequestState,
   UserStatus,
 } from '@prisma/client';
 import { UserType } from 'src/users/types';
@@ -92,4 +93,15 @@ export const updatedAssignedAsset = {
   name: 'Laptop 2',
   state: AssetState.AVAILABLE,
   location: Location.HCM,
+};
+
+export const returningRequest = {
+  id: 1,
+  assignmentId: 1,
+  requestedById: adminMockup.id,
+  acceptedById: null,
+  returnedDate: null,
+  state: RequestState.WAITING_FOR_RETURNING,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };

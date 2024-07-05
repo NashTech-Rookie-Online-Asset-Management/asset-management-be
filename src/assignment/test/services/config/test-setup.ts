@@ -35,6 +35,9 @@ export const setupTestModule = async () => {
       count: jest.fn(),
       delete: jest.fn(),
     },
+    returningRequest: {
+      create: jest.fn(),
+    },
   } as any;
 
   const module: TestingModule = await Test.createTestingModule({

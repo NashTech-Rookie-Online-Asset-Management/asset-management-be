@@ -10,6 +10,8 @@ export const Messages = {
       PASSWORD_NOT_CORRECT: 'Password is incorrect',
       PASSWORD_NOT_SAME: 'Old password and New password should not be the same',
       INACTIVE: 'This account is inactive',
+      DO_NOT_HAVE_PERMISSION:
+        'You do not have permission to access this resource',
     },
     VALIDATE: {
       USER_NAME: 'Username is required',

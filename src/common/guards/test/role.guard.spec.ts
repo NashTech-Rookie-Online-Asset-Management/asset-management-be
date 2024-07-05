@@ -2,7 +2,7 @@ import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { RolesGuard } from '../role.guard';
 import { AccountType, UserStatus } from '@prisma/client';
-import { UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Messages } from 'src/common/constants';
 
 const mockReflector = {
@@ -74,7 +74,14 @@ describe('RolesGuard', () => {
         type: AccountType.STAFF,
       },
     });
-    expect(guard.canActivate(mockContext as any)).toBe(false);
+
+    try {
+      guard.canActivate(mockContext as any);
+      fail('Should have thrown an error');
+    } catch (error) {
+      expect(error).toBeInstanceOf(ForbiddenException);
+      expect(error.message).toBe(Messages.AUTH.FAILED.DO_NOT_HAVE_PERMISSION);
+    }
   });
 
   it('Should return true if user has required role', () => {
