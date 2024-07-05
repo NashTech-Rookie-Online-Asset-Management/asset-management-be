@@ -54,6 +54,13 @@ describe('JwtStrategy', () => {
     expect(token).toBe('token');
   });
 
+  it('Should extract jwt from auth header', () => {
+    const req = { headers: { authorization: 'Bearer token' } };
+    const jwtFromRequest = strategy['_jwtFromRequest'] as (req: any) => string;
+    const token = jwtFromRequest(req);
+    expect(token).toBe('token');
+  });
+
   it("Should return a user's information after validating", async () => {
     const user = {
       id: 1,

@@ -749,10 +749,8 @@ export class AssignmentService {
         case AssignmentSortKey.ASSIGNED_DATE:
           orderBy.push({ assignedDate: pagination.sortOrder });
           break;
-        case AssignmentSortKey.STATE:
-          orderBy.push({ state: pagination.sortOrder });
-          break;
         default:
+          orderBy.push({ state: pagination.sortOrder });
           break;
       }
     }

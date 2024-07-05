@@ -39,12 +39,12 @@ export function IsValidJoinedDate(validationOptions?: ValidationOptions) {
           const joinedAt = new Date(value);
           const dob = new Date((args.object as any)[args.constraints[0]]);
 
-          if (!isAtLeast18YearsAfter(dob, joinedAt)) {
+          // Check if joinedAt is later than dob
+          if (joinedAt <= dob) {
             return false;
           }
 
-          // Check if joinedAt is later than dob
-          if (joinedAt <= dob) {
+          if (!isAtLeast18YearsAfter(dob, joinedAt)) {
             return false;
           }
 

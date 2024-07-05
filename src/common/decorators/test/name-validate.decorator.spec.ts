@@ -4,14 +4,23 @@ import { Messages } from 'src/common/constants';
 
 class TestClass {
   @IsValidName()
-  name: string;
+  name: any;
 
-  constructor(name: string) {
+  constructor(name: any) {
     this.name = name;
   }
 }
 
 describe('NameValidateDecorator', () => {
+  it('Should return false if the name is not string', async () => {
+    const test = new TestClass({});
+    const errors = await validate(test);
+    expect(errors.length).toBe(1);
+    expect(errors[0].constraints.isValidName).toBe(
+      Messages.USER.FAILED.NAME_TOO_LONG_OR_CONTAIN_SPECIAL_CHARACTOR,
+    );
+  });
+
   it('should return true if the name is valid', async () => {
     const test = new TestClass('John Doe');
     const errors = await validate(test);

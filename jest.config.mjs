@@ -20,6 +20,7 @@ const config = {
     'test-setup.ts',
     'configuration.ts',
     'prisma.service.ts',
+    'mock-data.ts',
   ],
   reporters: [
     'default',

@@ -1,6 +1,7 @@
 import { Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtAuthGuard } from '../jwt-auth.guard';
+import { AuthGuard } from '@nestjs/passport';
 
 const mockReflector = {
   get: jest.fn(),
@@ -38,7 +39,10 @@ describe('JwtAuthGuard', () => {
 
   it('Should call the super canActivate method if the handler is not public', () => {
     mockReflector.get.mockReturnValue(false);
-    const canActivateSpy = jest.spyOn(JwtAuthGuard.prototype, 'canActivate');
+    const canActivateSpy = jest.spyOn(
+      AuthGuard('jwt').prototype,
+      'canActivate',
+    );
     canActivateSpy.mockReturnValue(true);
     expect(guard.canActivate({ getHandler: jest.fn() } as any)).toBe(true);
     expect(canActivateSpy).toHaveBeenCalled();
