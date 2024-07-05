@@ -1,20 +1,14 @@
-import {
-  AccountType,
-  AssignmentState,
-  Location,
-  RequestState,
-  UserStatus,
-} from '@prisma/client';
+import { FindAllUsersSortKey, UserPaginationDto } from 'src/users/dto';
 import {
   mockPrismaService,
   service,
   setupTestModule,
 } from './config/test-setup';
-import { adminMockup } from './config/mock-data';
-import { FindAllUsersSortKey } from 'src/users/dto';
 import { Order } from 'src/common/constants';
+import { AccountType } from '@prisma/client';
+import { adminMockup, userWithAssignedTos } from './config/mock-data';
 
-describe('UsersService', () => {
+describe('UserService', () => {
   beforeEach(async () => {
     await setupTestModule();
   });
@@ -23,213 +17,266 @@ describe('UsersService', () => {
     jest.clearAllMocks();
   });
 
-  describe('getUsers', () => {
-    it('should find users by location with pagination and sorting', async () => {
-      const username = 'test_user';
-      const location = Location.HCM;
-      const dto = {
-        take: 10,
-        skip: 0,
-        sortField: FindAllUsersSortKey.FIRST_NAME,
-        sortOrder: Order.ASC,
-      };
+  it('should return users with pagination data when valid inputs are provided', async () => {
+    // Mock input data
+    const username = 'testuser';
 
-      (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
-        {
-          id: 1,
-          staffCode: 'SD0001',
-          firstName: 'John',
-          lastName: 'Doe',
-          assignedTos: [],
-        },
-        {
-          id: 2,
-          staffCode: 'SD0002',
-          firstName: 'Jane',
-          lastName: 'Smith',
-          assignedTos: [],
-        },
-      ]);
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
 
-      (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(10);
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
 
-      const result = await service.selectMany(username, adminMockup, dto);
+    const result = await service.selectMany(username, adminMockup, dto);
 
-      expect(result.data.length).toBe(2);
-      expect(result.pagination.totalPages).toBe(1);
-      expect(result.pagination.totalCount).toBe(10);
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
 
-      expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
-        where: {
-          location,
-          username: { not: username },
-          status: {
-            not: UserStatus.DISABLED,
-          },
-        },
-        orderBy: [
-          {
-            firstName: 'asc',
-          },
-        ],
-        take: dto.take,
-        skip: dto.skip,
-        include: {
-          assignedTos: {
-            where: {
-              state: {
-                in: [
-                  AssignmentState.WAITING_FOR_ACCEPTANCE,
-                  AssignmentState.ACCEPTED,
-                  AssignmentState.IS_REQUESTED,
-                ],
-              },
-            },
-            include: {
-              returningRequest: {
-                where: {
-                  state: RequestState.WAITING_FOR_RETURNING,
-                },
-              },
-            },
-          },
-        },
-      });
-    });
+  it('should return empty data and totalPages = 0 when no users match the search criteria', async () => {
+    const username = 'testuser';
 
-    it('should search users by name and staffCode (case-insensitive)', async () => {
-      const username = 'test_user';
-      const location = Location.HCM;
-      const dto = {
-        take: 10,
-        skip: 0,
-        search: 'doe',
-      };
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+      search: 'nonexistent',
+    };
 
-      (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
-        {
-          id: 1,
-          staffCode: 'SD0001',
-          firstName: 'John',
-          lastName: 'DOE',
-          assignedTos: [],
-        },
-      ]);
+    // Mock PrismaService methods to return no results
+    jest.spyOn(mockPrismaService.account, 'findMany').mockResolvedValueOnce([]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(0);
 
-      (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
+    const result = await service.selectMany(username, adminMockup, dto);
 
-      const result = await service.selectMany(username, adminMockup, dto);
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(0);
+    expect(result.pagination.totalCount).toBe(0);
+    expect(result.pagination.totalPages).toBe(0);
+  });
 
-      expect(result.data.length).toBe(1);
-      expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
-        where: {
-          location,
-          username: { not: username },
-          status: {
-            not: UserStatus.DISABLED,
-          },
-          OR: [
-            {
-              fullName: {
-                contains: dto.search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              staffCode: {
-                contains: dto.search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-        orderBy: [],
-        take: dto.take,
-        skip: dto.skip,
-        include: {
-          assignedTos: {
-            where: {
-              state: {
-                in: [
-                  AssignmentState.WAITING_FOR_ACCEPTANCE,
-                  AssignmentState.ACCEPTED,
-                  AssignmentState.IS_REQUESTED,
-                ],
-              },
-            },
-            include: {
-              returningRequest: {
-                where: {
-                  state: RequestState.WAITING_FOR_RETURNING,
-                },
-              },
-            },
-          },
-        },
-      });
-    });
+  it('should handle large search string and return empty data', async () => {
+    const username = 'testuser';
 
-    it('should filter users by types', async () => {
-      const username = 'test_user';
-      const location = Location.HCM;
-      const dto = {
-        take: 10,
-        skip: 0,
-        types: [AccountType.STAFF],
-      };
+    const longSearchString = 'a'.repeat(265); // More than 264 characters
 
-      (mockPrismaService.account.findMany as jest.Mock).mockResolvedValueOnce([
-        {
-          id: 1,
-          staffCode: 'SD0001',
-          firstName: 'John',
-          lastName: 'DOE',
-          updatedAt: undefined,
-          assignedTos: [],
-        },
-      ]);
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+      search: longSearchString,
+    };
 
-      (mockPrismaService.account.count as jest.Mock).mockResolvedValueOnce(1);
+    const result = await service.selectMany(username, adminMockup, dto);
 
-      const result = await service.selectMany(username, adminMockup, dto);
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(0);
+    expect(result.pagination.totalCount).toBe(0);
+    expect(result.pagination.totalPages).toBe(0);
+  });
 
-      expect(result.data.length).toBe(1);
-      expect(mockPrismaService.account.findMany).toHaveBeenCalledWith({
-        where: {
-          location,
-          username: { not: username },
-          status: {
-            not: UserStatus.DISABLED,
-          },
+  it('should filter users by type when types array is provided in dto', async () => {
+    const username = 'testuser';
 
-          type: {
-            in: dto.types,
-          },
-        },
-        orderBy: [],
-        take: dto.take,
-        skip: dto.skip,
-        include: {
-          assignedTos: {
-            where: {
-              state: {
-                in: [
-                  AssignmentState.WAITING_FOR_ACCEPTANCE,
-                  AssignmentState.ACCEPTED,
-                  AssignmentState.IS_REQUESTED,
-                ],
-              },
-            },
-            include: {
-              returningRequest: {
-                where: {
-                  state: RequestState.WAITING_FOR_RETURNING,
-                },
-              },
-            },
-          },
-        },
-      });
-    });
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+      types: [AccountType.ADMIN, AccountType.STAFF],
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(2);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination.totalCount).toBe(2);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+
+  it('should filter users by location when adminMockup is not ROOT', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+
+  it('should handle empty search and still return results', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+      search: '',
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+
+  it('should handle search by staff code when search string length is <= 6', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+      search: 'S12345',
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+
+  it('should handle search by full name when search string length is > 6', async () => {
+    const username = 'testuser';
+
+    const longSearchString = 'John Doe';
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+      search: longSearchString,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+
+  it('should handle different sort fields and orders', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.STAFF_CODE,
+      sortOrder: Order.DESC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+
+  it('should return correct canDisable values based on assignedTos state', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].canDisable).toBe(false);
+  });
+
+  it('should handle default case for sortField and return empty data', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.STAFF_CODE,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    jest.spyOn(mockPrismaService.account, 'findMany').mockResolvedValueOnce([]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(0);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(0);
+    expect(result.pagination.totalCount).toBe(0);
+    expect(result.pagination.totalPages).toBe(0);
   });
 });

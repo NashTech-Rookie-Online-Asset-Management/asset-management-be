@@ -1,4 +1,10 @@
-import { AccountType, Location, UserStatus } from '@prisma/client';
+import {
+  AccountType,
+  AssignmentState,
+  Gender,
+  Location,
+  UserStatus,
+} from '@prisma/client';
 import { CreateAssetDto } from 'src/asset/dto';
 import { UserType } from 'src/users/types';
 import * as bcrypt from 'bcryptjs';
@@ -19,6 +25,27 @@ export const user = {
   status: UserStatus.ACTIVE,
   type: AccountType.ADMIN,
   location: Location.HCM,
+};
+export const userWithAssignedTos = {
+  id: 1,
+  staffCode: 'S123',
+  firstName: 'John',
+  lastName: 'Doe',
+  fullName: 'John Doe',
+  username: 'johndoe',
+  password: '',
+  joinedAt: new Date(),
+  type: AccountType.ADMIN,
+  dob: new Date(2002, 1, 29),
+  gender: Gender.MALE,
+  location: Location.HCM,
+  status: UserStatus.ACTIVE,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  assignedTos: [
+    { id: 1, state: AssignmentState.ACCEPTED },
+    { id: 2, state: AssignmentState.DECLINED },
+  ],
 };
 export const createAssetDto: CreateAssetDto = {
   name: 'Laptop HP Probook 450 G1',

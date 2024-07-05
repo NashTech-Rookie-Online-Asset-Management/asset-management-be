@@ -14,7 +14,6 @@ export const setupTestModule = async () => {
       update: jest.fn(),
       findUser: jest.fn(),
       findUnique: jest.fn(),
-
       findFirst: jest.fn(),
       findMany: jest.fn(),
     },
