@@ -1,4 +1,5 @@
 import {
+  AccountType,
   AssignmentState,
   Location,
   RequestState,
@@ -9,8 +10,9 @@ import {
   service,
   setupTestModule,
 } from './config/test-setup';
-import { adminMockup } from './config/mock-data';
+import { adminMockup, mockUser } from './config/mock-data';
 import { BadRequestException } from '@nestjs/common';
+import { Messages } from 'src/common/constants';
 
 describe('UsersService', () => {
   beforeEach(async () => {
@@ -26,15 +28,17 @@ describe('UsersService', () => {
       const userStaffCode = 'SD0002';
 
       // Mock the return value of PrismaService methods for findUnique and update
-      const mockUser = {
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
         staffCode: userStaffCode,
-        assignedTos: [],
-        assignedBys: [],
-        location: Location.HCM,
-      };
-      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
-        mockUser,
-      );
+        assignedTos: [
+          {
+            state: AssignmentState.IS_REQUESTED,
+            returningRequest: { state: RequestState.COMPLETED },
+          },
+        ],
+      });
       (mockPrismaService.account.update as jest.Mock).mockResolvedValue({
         ...mockUser,
         status: UserStatus.DISABLED,
@@ -94,18 +98,80 @@ describe('UsersService', () => {
     it('should throw BadRequestException if user has valid assignments', async () => {
       const userStaffCode = 'SD0002';
 
-      const mockUser = {
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
         staffCode: userStaffCode,
         assignedTos: [{ state: AssignmentState.ACCEPTED }],
-        assignedBys: [],
-      };
-
-      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
-        mockUser,
-      );
+      });
 
       await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
         BadRequestException,
+      );
+    });
+
+    // This account is disabled
+    it('should throw BadRequestException if disable your own account', async () => {
+      const userStaffCode = 'SD0001';
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        id: 1,
+      });
+
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
+        new BadRequestException(Messages.USER.FAILED.DISABLE_OWN_ACCOUNT),
+      );
+    });
+    it('should throw BadRequestException if disabled same type', async () => {
+      const userStaffCode = 'SD0001';
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        type: AccountType.ADMIN,
+      });
+
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
+        new BadRequestException(Messages.USER.FAILED.DISABLE_SAME_TYPE),
+      );
+    });
+    it('should throw BadRequestException if account already disabled', async () => {
+      const userStaffCode = 'SD0001';
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.DISABLED,
+      });
+
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
+        new BadRequestException(Messages.USER.FAILED.DISABLED_ALREADY),
+      );
+    });
+
+    it('should throw BadRequestException if account not same location', async () => {
+      const userStaffCode = 'SD0001';
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        location: Location.HN,
+      });
+
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
+        new BadRequestException(
+          Messages.USER.FAILED.DISABLED_NOT_SAME_LOCATION,
+        ),
+      );
+    });
+    it('should throw BadRequestException if account disable is root', async () => {
+      const userStaffCode = 'SD0001';
+
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+
+        type: AccountType.ROOT,
+      });
+
+      await expect(service.disable(adminMockup, userStaffCode)).rejects.toThrow(
+        new BadRequestException(Messages.USER.FAILED.DISABLED_ROOT),
       );
     });
   });

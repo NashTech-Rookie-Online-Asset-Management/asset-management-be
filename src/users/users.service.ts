@@ -44,8 +44,8 @@ export class UsersService {
     const dob = new Date(createUserDto.dob);
     const joinedAt = new Date(createUserDto.joinedAt);
 
-    if (!Object.values(Location).includes(admin.location)) {
-      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    if (!Object.values(Location).includes(admin?.location)) {
+      throw new BadRequestException(Messages.USER.FAILED.INVALID_LOCATION);
     }
 
     if (admin.type === createUserDto.type) {
@@ -96,7 +96,15 @@ export class UsersService {
       userCreated.password = password;
       return userCreated;
     } catch (error) {
-      throw new BadRequestException(Messages.USER.FAILED.CREATE);
+      throw new HttpException(
+        {
+          message: error?.message,
+          error: error?.response?.error,
+          statusCode: error?.response?.statusCode,
+        },
+        error?.getStatus(),
+        error?.getResponse(),
+      );
     }
   }
 
@@ -243,13 +251,14 @@ export class UsersService {
   }
 
   private validateJoinedDate(dob: Date, joinedAt: Date) {
+    if (joinedAt <= dob) {
+      throw new BadRequestException(Messages.USER.FAILED.JOINED_AFTER_DOB);
+    }
+
     if (!isAtLeast18YearsAfter(dob, joinedAt)) {
       throw new BadRequestException(Messages.USER.FAILED.JOINED_DATE_UNDER_AGE);
     }
 
-    if (joinedAt <= dob) {
-      throw new BadRequestException(Messages.USER.FAILED.JOINED_AFTER_DOB);
-    }
     const dayOfWeek = joinedAt.getDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       throw new BadRequestException(Messages.USER.FAILED.JOINED_WEEKEND);

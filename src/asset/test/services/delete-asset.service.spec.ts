@@ -8,6 +8,7 @@ import {
   ConflictException,
   ForbiddenException,
   HttpException,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Location } from '@prisma/client';
@@ -112,6 +113,47 @@ describe('AssetService', () => {
       );
       (prismaService.asset.delete as jest.Mock).mockResolvedValue({});
       (prismaService.asset.findFirst as jest.Mock).mockResolvedValue(null);
+    });
+
+    it('should throw InternalServerErrorException if delete fails', async () => {
+      const assetMock = {
+        id: existingAssetId,
+        location: location,
+        assignments: [],
+      };
+
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(
+        assetMock,
+      );
+      (prismaService.asset.delete as jest.Mock).mockRejectedValue(
+        new Error('Deletion error'),
+      );
+
+      await expect(
+        assetService.delete(location, existingAssetId),
+      ).rejects.toThrow(InternalServerErrorException);
+      await expect(
+        assetService.delete(location, existingAssetId),
+      ).rejects.toThrow('Deletion error');
+    });
+
+    it('should delete the asset successfully and return a success message', async () => {
+      const assetMock = {
+        id: existingAssetId,
+        location: location,
+        assignments: [],
+      };
+
+      (prismaService.asset.findUnique as jest.Mock).mockResolvedValue(
+        assetMock,
+      );
+      (prismaService.asset.delete as jest.Mock).mockResolvedValue({});
+
+      const result = await assetService.delete(location, existingAssetId);
+
+      expect(result).toEqual({
+        message: Messages.ASSET.SUCCESS.DELETED,
+      });
     });
   });
 });

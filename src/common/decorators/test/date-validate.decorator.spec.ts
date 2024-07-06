@@ -29,6 +29,20 @@ describe('DateValidateDecorator', () => {
       Messages.USER.FAILED.JOINED_AFTER_DOB,
     );
   });
+  it('Should return an error if joined data is February  dob', async () => {
+    const test = new TestClass('2000-01-01', '2024-02-30');
+    const errors = await validate(test);
+    expect(errors[0].constraints.isValidJoinedDate).toBe(
+      Messages.USER.FAILED.JOINED_DATE_INVALID,
+    );
+  });
+  it('Should return an error if joined data is not valid  dob', async () => {
+    const test = new TestClass('2000-01-01', '2024-02-100');
+    const errors = await validate(test);
+    expect(errors[0].constraints.isValidJoinedDate).toBe(
+      Messages.USER.FAILED.JOINED_DATE_UNDER_AGE,
+    );
+  });
 
   it('Should return an error when the birth date is less than 18 years', async () => {
     const test = new TestClass('2020-01-01', '2020-01-01');

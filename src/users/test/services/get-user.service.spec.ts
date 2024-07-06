@@ -129,5 +129,15 @@ describe('UsersService', () => {
         ForbiddenException,
       );
     });
+    it('should throw ForbiddenException when user is disabled', async () => {
+      (mockPrismaService.account.findFirst as jest.Mock).mockResolvedValue({
+        ...user,
+        status: UserStatus.DISABLED,
+      });
+
+      await expect(service.selectOne('S123', adminMockup)).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
   });
 });

@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 export let assetService: AssetService;
 export let prismaService: PrismaService;
+export let lockService: LockService;
 
 export const setupTestModule = async () => {
   prismaService = {

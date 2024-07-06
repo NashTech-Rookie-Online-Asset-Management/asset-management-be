@@ -5,7 +5,7 @@ import {
   setupTestModule,
 } from './config/test-setup';
 import { Order } from 'src/common/constants';
-import { AccountType } from '@prisma/client';
+import { AccountType, AssignmentState, RequestState } from '@prisma/client';
 import { adminMockup, userWithAssignedTos } from './config/mock-data';
 
 describe('UserService', () => {
@@ -23,6 +23,85 @@ describe('UserService', () => {
 
     const dto: UserPaginationDto = {
       sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(
+      username,
+      { ...adminMockup, type: AccountType.ROOT },
+      dto,
+    );
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+  it('should return users sorted by joinedAt', async () => {
+    // Mock input data
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.JOINDED_AT,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, { ...adminMockup }, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+  it('should return users sorted by type', async () => {
+    // Mock input data
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.TYPE,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest
+      .spyOn(mockPrismaService.account, 'findMany')
+      .mockResolvedValueOnce([userWithAssignedTos]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe(1);
+    expect(result.pagination.totalCount).toBe(1);
+    expect(result.pagination.totalPages).toBe(1);
+  });
+  it('should return users sorted by default', async () => {
+    // Mock input data
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: 'default' as any,
       sortOrder: Order.ASC,
       take: 10,
       skip: 0,
@@ -278,5 +357,39 @@ describe('UserService', () => {
     expect(result.data).toHaveLength(0);
     expect(result.pagination.totalCount).toBe(0);
     expect(result.pagination.totalPages).toBe(0);
+  });
+
+  it('should return correct canDisable values based on assignedTos state', async () => {
+    const username = 'testuser';
+
+    const dto: UserPaginationDto = {
+      sortField: FindAllUsersSortKey.FIRST_NAME,
+      sortOrder: Order.ASC,
+      take: 10,
+      skip: 0,
+    };
+
+    // Mock PrismaService methods
+    jest.spyOn(mockPrismaService.account, 'findMany').mockResolvedValueOnce([
+      {
+        ...userWithAssignedTos,
+        assignedTos: [
+          {
+            state: AssignmentState.IS_REQUESTED,
+            returningRequest: {
+              state: RequestState.WAITING_FOR_RETURNING,
+            },
+          },
+        ],
+      } as any,
+    ]);
+    jest.spyOn(mockPrismaService.account, 'count').mockResolvedValueOnce(1);
+
+    const result = await service.selectMany(username, adminMockup, dto);
+
+    expect(result).toBeDefined();
+    expect(result.data).toHaveLength(1);
+
+    expect(result.data[0].canDisable).toBe(false); // userWithRequestedAssignmentAndWaitingForReturning
   });
 });

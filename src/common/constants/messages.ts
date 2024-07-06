@@ -68,6 +68,7 @@ export const Messages = {
         'Another admin is updating this user. Please try again later',
       NAME_TOO_LONG_OR_CONTAIN_SPECIAL_CHARACTOR:
         'Name must be a string between 1 and 128 characters long and must not contain special characters',
+      INVALID_LOCATION: 'Invalid location',
     },
     VALIDATE: {
       DOB: 'Date of Birth is required',

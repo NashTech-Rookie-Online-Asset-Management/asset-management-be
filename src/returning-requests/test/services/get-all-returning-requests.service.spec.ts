@@ -518,5 +518,51 @@ describe('ReturningRequestsService', () => {
         },
       });
     });
+
+    it('should return returning requests sorted by requested by query', async () => {
+      const location = Location.HCM;
+
+      // Mocking PrismaService responses
+      const mockReturningRequests = [{ id: 1, location }];
+      const mockTotalCount = 1;
+      (prismaService.returningRequest.findMany as jest.Mock).mockResolvedValue(
+        mockReturningRequests,
+      );
+      (prismaService.returningRequest.count as jest.Mock).mockResolvedValue(
+        mockTotalCount,
+      );
+
+      const result = await service.getAll(location, {
+        ...dto,
+        sortField: FindAllReturningRequestsSortKey.REQUESTED_BY,
+        skip: 0,
+      });
+
+      expect(prismaService.returningRequest.findMany).toHaveBeenCalledWith({
+        where: {
+          returnedDate: {
+            gte: startDate,
+            lt: endDate,
+          },
+          state: {
+            in: dto.states,
+          },
+        },
+        orderBy: {
+          requestedBy: {
+            username: dto.sortOrder,
+          },
+        },
+        ...conditions,
+      });
+
+      expect(result).toEqual({
+        data: mockReturningRequests,
+        pagination: {
+          totalPages: Math.ceil(mockTotalCount / dto.take),
+          totalCount: mockTotalCount,
+        },
+      });
+    });
   });
 });

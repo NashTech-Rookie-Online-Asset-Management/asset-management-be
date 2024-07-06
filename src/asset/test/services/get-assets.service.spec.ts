@@ -168,6 +168,32 @@ describe('AssetService', () => {
       expect(result.pagination.totalPages).toBe(1);
       expect(result.pagination.totalCount).toBe(1);
     });
+    it('should return assets and pagination data with order category query', async () => {
+      const dto: AssetPageOptions = {
+        take: 10,
+        skip: 0,
+        sortField: 'category',
+        sortOrder: Order.ASC,
+      };
+
+      (prismaService.asset.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 1,
+          assetCode: 'LA100001',
+          name: 'Laptop HP Probook 450 G1',
+          state: AssetState.AVAILABLE,
+          category: { id: 1, name: 'Laptop' },
+        },
+      ]);
+      (prismaService.asset.count as jest.Mock).mockResolvedValue(1);
+
+      const result = await assetService.getAssets(location, dto);
+
+      expect(result).toHaveProperty('data');
+      expect(result).toHaveProperty('pagination');
+      expect(result.pagination.totalPages).toBe(1);
+      expect(result.pagination.totalCount).toBe(1);
+    });
 
     it('should return assets and pagination data with category query', async () => {
       const dto: AssetPageOptions = {

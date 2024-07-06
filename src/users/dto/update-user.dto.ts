@@ -10,25 +10,25 @@ export class UpdateUserDto {
   @IsDateString()
   @IsOlderThan18()
   @IsOptional()
-  dob: Date | string;
+  dob?: Date | string;
 
   @ApiProperty()
   @IsNotEmpty({ message: Messages.USER.VALIDATE.JOINED_DATE })
   @IsDateString()
   @IsOptional()
-  joinedAt: Date;
+  joinedAt?: Date;
 
   @ApiProperty({ enum: Gender })
   @IsNotEmpty()
   @IsEnum(Gender, { message: Messages.USER.VALIDATE.GENDER_INVALID })
   @IsOptional()
-  gender: Gender;
+  gender?: Gender;
 
   @ApiProperty({ enum: AccountType })
   @IsNotEmpty()
   @IsEnum(AccountType, { message: Messages.USER.VALIDATE.LOCATION_INVALID })
   @IsOptional()
-  type: AccountType;
+  type?: AccountType;
 
   @ApiPropertyOptional()
   @IsOptional()

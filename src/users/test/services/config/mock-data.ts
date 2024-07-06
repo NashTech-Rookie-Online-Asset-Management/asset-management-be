@@ -9,7 +9,7 @@ import { CreateAssetDto } from 'src/asset/dto';
 import { UserType } from 'src/users/types';
 import * as bcrypt from 'bcryptjs';
 import { ChangePasswordDto } from 'src/auth/dto';
-import { CreateUserDto } from 'src/users/dto';
+import { CreateUserDto, UpdateUserDto } from 'src/users/dto';
 export const adminMockup: UserType = {
   id: 1,
   staffCode: 'SD0001',
@@ -58,10 +58,12 @@ export const createAssetDto: CreateAssetDto = {
 export const mockUser = {
   username: 'testuser',
   password: bcrypt.hash('oldpassword', 10),
-  id: 1,
   staffCode: 'SD0001',
   status: 'ACTIVE',
-  type: 'USER',
+  type: AccountType.STAFF,
+  location: Location.HCM,
+  assignedTos: [],
+  assignedBys: [],
 };
 
 export const changePasswordDto: ChangePasswordDto = {
@@ -89,4 +91,11 @@ export const mockedCreateReturnValue = {
   joinedAt: new Date('2024-06-17'),
   type: 'STAFF',
   location: Location.HCM,
+};
+
+export const updateUserDto: UpdateUserDto = {
+  dob: new Date('2010-01-01'),
+  gender: 'MALE',
+  joinedAt: new Date('2024-06-17'),
+  type: AccountType.STAFF,
 };
