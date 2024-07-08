@@ -49,16 +49,23 @@ export class AssetController extends BaseController {
   }
 
   @Get('/report')
-  getReport(@Query() dto: ReportPaginationDto) {
-    return this.reportService.selectMany(dto);
+  getReport(
+    @Query() dto: ReportPaginationDto,
+    @GetUser('location') location: Location,
+  ) {
+    return this.reportService.selectMany(dto, location);
   }
 
   @Get('/report/export')
   async getReportFile(
     @Query('format') format: FileFormat,
+    @GetUser('location') location: Location,
     @Res() res: Response,
   ) {
-    const buffer = (await this.reportService.export(format)) as Buffer;
+    const buffer = (await this.reportService.export(
+      format,
+      location,
+    )) as Buffer;
 
     res.set(
       'Content-Disposition',

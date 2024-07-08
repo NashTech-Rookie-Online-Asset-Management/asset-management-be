@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-
+import { Location } from '@prisma/client';
 import {
   FindAllReportItemsSortKey,
   ReportItem,
@@ -17,7 +17,7 @@ export class ReportService {
     private readonly fileService: FileService,
   ) {}
 
-  async selectMany(queryParams: ReportPaginationDto) {
+  async selectMany(queryParams: ReportPaginationDto, location: Location) {
     const raw = (await this.prismaService.$queryRawUnsafe(`
       SELECT
         c."name" as "categoryName",
@@ -29,7 +29,7 @@ export class ReportService {
         SUM(CASE WHEN a."state" = 'RECYCLED' THEN 1 ELSE 0 END) AS "recycled"
       FROM public."Asset" a
       JOIN public."Category" c ON a."categoryId" = c."id"
-      WHERE c."name" ILIKE '%${queryParams.search}%'
+      WHERE a."location" = '${location}' AND c."name" ILIKE '%${queryParams.search}%'
       GROUP BY c."name"
       ORDER BY "${queryParams.sortField}" ${queryParams.sortOrder}
       LIMIT ${queryParams.take ?? 'ALL'} 
@@ -65,7 +65,7 @@ export class ReportService {
     };
   }
 
-  async export(format: FileFormat) {
+  async export(format: FileFormat, location: Location) {
     format = FileFormat.EXCEL;
     const queryParams: ReportPaginationDto = {
       skip: 0,
@@ -74,7 +74,7 @@ export class ReportService {
       sortField: FindAllReportItemsSortKey.CATEGORY,
       sortOrder: Order.ASC,
     };
-    const res = await this.selectMany(queryParams);
+    const res = await this.selectMany(queryParams, location);
     const input: GenerateFileInput = {
       data: res.data,
       format,

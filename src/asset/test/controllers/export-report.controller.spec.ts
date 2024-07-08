@@ -1,3 +1,4 @@
+import { Location } from '@prisma/client';
 import {
   controller,
   reportService,
@@ -22,9 +23,16 @@ describe('AssetController', () => {
 
       jest.spyOn(reportService, 'export').mockResolvedValue(mockBuffer);
 
-      await controller.getReportFile(FileFormat.EXCEL, expressResponse);
+      await controller.getReportFile(
+        FileFormat.EXCEL,
+        Location.HCM,
+        expressResponse,
+      );
 
-      expect(reportService.export).toHaveBeenCalledWith(FileFormat.EXCEL);
+      expect(reportService.export).toHaveBeenCalledWith(
+        FileFormat.EXCEL,
+        Location.HCM,
+      );
       // expect(expressResponse.setHeader).toHaveBeenCalledWith(
       //   'Content-Disposition',
       //   expect.stringContaining('attachment; filename=OAM Report '),

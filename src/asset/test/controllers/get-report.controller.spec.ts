@@ -4,6 +4,7 @@ import {
   reportService,
   setupTestController,
 } from './config/test-setup';
+import { Location } from '@prisma/client';
 
 describe('AssetController', () => {
   beforeEach(async () => {
@@ -39,10 +40,10 @@ describe('AssetController', () => {
       };
       jest.spyOn(reportService, 'selectMany').mockResolvedValue(result);
 
-      const res = await controller.getReport(dto);
+      const res = await controller.getReport(dto, Location.HCM);
 
       expect(res).toBe(result);
-      expect(reportService.selectMany).toHaveBeenCalledWith(dto);
+      expect(reportService.selectMany).toHaveBeenCalledWith(dto, Location.HCM);
     });
   });
 });

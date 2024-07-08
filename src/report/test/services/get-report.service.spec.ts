@@ -5,6 +5,7 @@ import {
   setupTestModule,
 } from './config/test-setup';
 import { assets, report } from './config/mock-data';
+import { Location } from '@prisma/client';
 
 describe('Report service', () => {
   beforeEach(async () => {
@@ -32,7 +33,7 @@ describe('Report service', () => {
 
       (prismaService.asset.findMany as jest.Mock).mockResolvedValueOnce(assets);
 
-      const res = await reportService.selectMany(dto);
+      const res = await reportService.selectMany(dto, Location.HCM);
 
       expect(res).toStrictEqual(report);
     });
@@ -47,7 +48,7 @@ describe('Report service', () => {
 
       (prismaService.asset.findMany as jest.Mock).mockResolvedValueOnce(assets);
 
-      const res = await reportService.selectMany(dto);
+      const res = await reportService.selectMany(dto, Location.HCM);
 
       expect(res).toStrictEqual(report);
     });

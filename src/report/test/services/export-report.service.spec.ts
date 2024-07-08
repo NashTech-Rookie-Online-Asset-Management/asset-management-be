@@ -5,6 +5,7 @@ import {
 } from './config/test-setup';
 import { assets, report } from './config/mock-data';
 import { FileFormat } from 'src/common/constants/file-format';
+import { Location } from '@prisma/client';
 
 describe('Report service', () => {
   beforeEach(async () => {
@@ -27,7 +28,7 @@ describe('Report service', () => {
 
       (prismaService.asset.findMany as jest.Mock).mockResolvedValueOnce(assets);
 
-      const res = await reportService.export(FileFormat.EXCEL);
+      const res = await reportService.export(FileFormat.EXCEL, Location.HCM);
 
       expect(res).toBeInstanceOf(Buffer);
     });
