@@ -118,10 +118,10 @@ enum AssetState {
 }
 
 enum AssignmentState {
-  WAITING_FOR_ACCEPTANCE
   ACCEPTED
   DECLINED
   IS_REQUESTED
+  WAITING_FOR_ACCEPTANCE
 }
 
 enum RequestState {

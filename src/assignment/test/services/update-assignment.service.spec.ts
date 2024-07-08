@@ -387,6 +387,34 @@ describe('Assignment Service', () => {
     );
   });
 
+  it('Should edit assignment if assigned date is unchanged', async () => {
+    const date = new Date('2021-01-01');
+
+    (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValueOnce({
+      ...assignment,
+      assignedDate: date,
+    });
+
+    (mockPrisma.account.findUnique as jest.Mock).mockResolvedValueOnce(
+      assignedUser,
+    );
+
+    (mockPrisma.asset.findUnique as jest.Mock).mockResolvedValueOnce(
+      updatedAssignedAsset,
+    );
+
+    (mockPrisma.assignment.update as jest.Mock).mockResolvedValueOnce(
+      assignmentDto,
+    );
+
+    expect(
+      await service.update(createdUser, 1, {
+        ...assignmentDto,
+        assignedDate: date.toISOString(),
+      }),
+    ).toEqual(assignmentDto);
+  });
+
   it('Should not edit assignment if assignment is editting', async () => {
     (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValue(
       assignment,

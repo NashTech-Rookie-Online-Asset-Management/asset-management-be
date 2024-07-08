@@ -97,7 +97,7 @@ export class AssignmentPaginationDto extends PaginationDto {
   @IsDateString()
   @IsOptional()
   @ApiPropertyOptional()
-  date?: string = new Date('2000-01-01').toISOString().split('T')[0];
+  date?: string;
 
   @ApiPropertyOptional()
   @IsArray()

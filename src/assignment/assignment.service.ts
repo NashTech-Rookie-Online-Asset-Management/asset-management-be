@@ -13,6 +13,7 @@ import {
   Account,
   AccountType,
   AssetState,
+  Assignment,
   AssignmentState,
   Location,
   RequestState,
@@ -87,12 +88,13 @@ export class AssignmentService {
       assignedBy: {
         location: user.location,
       },
+      assignedTo: {
+        location: user.location,
+      },
+      asset: {
+        location: user.location,
+      },
       AND: [
-        {
-          assignedDate: {
-            gte: new Date(dto.date),
-          },
-        },
         {
           state: {
             in: dto.states,
@@ -128,6 +130,19 @@ export class AssignmentService {
         },
       ],
     };
+
+    if (dto.date) {
+      const dtoDate = new Date(dto.date);
+      const tomorrow = new Date(dtoDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      where.AND.push({
+        assignedDate: {
+          gte: dtoDate,
+          lt: tomorrow,
+        },
+      } as any);
+    }
 
     const [count, data] = await Promise.all([
       this.prismaService.assignment.count({ where }),
@@ -461,8 +476,7 @@ export class AssignmentService {
           throw new BadRequestException(Messages.ASSIGNMENT.FAILED.DATA_EDITED);
         }
       }
-      const isDifferentAsset = assignment.asset.assetCode !== dto.assetCode;
-      await this.validate(editUser, dto, isDifferentAsset);
+      await this.validate(editUser, dto, assignment);
 
       await this.assetService.updateState(
         assignment.asset.assetCode,
@@ -532,7 +546,7 @@ export class AssignmentService {
   private async validate(
     createdUser: Account,
     dto: AssignmentDto,
-    isDifferentAsset = true,
+    editAssignment?: Assignment,
   ) {
     const asset = await this.prismaService.asset.findUnique({
       where: {
@@ -567,6 +581,9 @@ export class AssignmentService {
     }
 
     // Check asset is available
+    const isDifferentAsset = editAssignment
+      ? editAssignment.assetId !== asset.id
+      : true;
     if (isDifferentAsset && asset.state !== AssetState.AVAILABLE) {
       throw new BadRequestException(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_AVAILABLE,
@@ -600,9 +617,13 @@ export class AssignmentService {
     }
 
     // Check if assignment date is in the past
+    // Only check when create new assignment or change assigned date
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    if (new Date(dto.assignedDate) <= yesterday) {
+    if (
+      dto.assignedDate !== editAssignment?.assignedDate.toISOString() &&
+      new Date(dto.assignedDate) <= yesterday
+    ) {
       throw new BadRequestException(
         Messages.ASSIGNMENT.FAILED.DATE_IN_THE_PAST,
       );

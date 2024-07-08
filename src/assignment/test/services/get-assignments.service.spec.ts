@@ -67,6 +67,14 @@ describe('Assignment Service', () => {
     expect(result).toEqual(mockResult);
   });
 
+  it('Should get assignments with assigned date filter', async () => {
+    const dto = plainToInstance(AssignmentPaginationDto, {
+      date: '2021-01-01',
+    });
+    const result = await service.getAll(createdUser, dto);
+    expect(result).toEqual(mockResult);
+  });
+
   it('Should get one assignment', async () => {
     const mockValue = { id: 1 };
 
