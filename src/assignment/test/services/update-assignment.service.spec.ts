@@ -56,6 +56,23 @@ describe('Assignment Service', () => {
     }
   });
 
+  it('Should not edit assignment if assignment is in decline state', async () => {
+    (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValueOnce({
+      ...assignment,
+      state: AssignmentState.DECLINED,
+    });
+
+    try {
+      await service.update(createdUser, 1, assignmentDto);
+      fail('Should not reach here');
+    } catch (error) {
+      expect(error).toBeInstanceOf(HttpException);
+      expect(error.message).toBe(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
+      );
+    }
+  });
+
   it('Should not edit assignment if assignment is in requesting state', async () => {
     (mockPrisma.assignment.findFirst as jest.Mock).mockResolvedValueOnce({
       ...assignment,
