@@ -20,6 +20,9 @@ import {
 import { CookieOptions, Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { Cookies, Messages } from 'src/common/constants';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators';
+import { AccountType } from '@prisma/client';
 
 const cookieOptions: CookieOptions =
   process.env.NODE_ENV === 'production'
@@ -61,7 +64,8 @@ export class AuthController {
     return { accessToken: auth?.accessToken, refreshToken: auth?.refreshToken };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountType.ADMIN, AccountType.STAFF, AccountType.ROOT)
   @Patch('change-password')
   changePassword(
     @GetUser('staffCode') staffCode: string,

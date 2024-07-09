@@ -91,6 +91,7 @@ export const mockedCreateReturnValue = {
   joinedAt: new Date('2024-06-17'),
   type: 'STAFF',
   location: Location.HCM,
+  canDisable: true,
 };
 
 export const updateUserDto: UpdateUserDto = {

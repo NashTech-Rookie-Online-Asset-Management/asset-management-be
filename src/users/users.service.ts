@@ -6,7 +6,6 @@ import {
   HttpException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Account,
@@ -94,7 +93,7 @@ export class UsersService {
         },
       });
       userCreated.password = password;
-      return userCreated;
+      return { ...userCreated, canDisable: true };
     } catch (error) {
       throw new HttpException(
         {
@@ -125,11 +124,32 @@ export class UsersService {
         throw new BadRequestException(Messages.USER.FAILED.UPDATE_SELF);
       }
 
-      const userExisted = await this.findUser(
-        { staffCode: userStaffCode },
-        Messages.USER.FAILED.NOT_FOUND,
-      );
-
+      const userExisted = await this.prismaService.account.findUnique({
+        where: { staffCode: userStaffCode },
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!userExisted) {
+        throw new NotFoundException(Messages.USER.FAILED.NOT_FOUND);
+      }
       if (
         userExisted.location !== admin.location &&
         admin.type === AccountType.ADMIN
@@ -189,7 +209,22 @@ export class UsersService {
           type: true,
         },
       });
-      return userUpdated;
+      return {
+        ...userUpdated,
+        canDisable: !userExisted.assignedTos.some(
+          (assignment) =>
+            (
+              [
+                AssignmentState.WAITING_FOR_ACCEPTANCE,
+                AssignmentState.ACCEPTED,
+              ] as AssignmentState[]
+            ).includes(assignment.state) ||
+            (assignment.state === AssignmentState.IS_REQUESTED &&
+              assignment.returningRequest &&
+              assignment.returningRequest.state ===
+                RequestState.WAITING_FOR_RETURNING),
+        ),
+      };
     } catch (error) {
       throw new HttpException(
         {
@@ -285,18 +320,6 @@ export class UsersService {
     return similarUsernames.map((user) => user.username);
   }
 
-  private async findUser(
-    where: { username: string } | { staffCode: string },
-    message: string,
-  ) {
-    const user = await this.prismaService.account.findUnique({ where });
-
-    if (!user) {
-      throw new UnauthorizedException(message);
-    }
-
-    return user;
-  }
   private generatePassword(username: string, dob: Date): string {
     const formattedDOB = formatDate(dob);
     return `${username}@${formattedDOB}`;

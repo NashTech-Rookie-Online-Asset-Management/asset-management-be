@@ -53,6 +53,10 @@ export class AuthService {
       Messages.USER.FAILED.NOT_FOUND,
     );
 
+    if (user.status === UserStatus.DISABLED) {
+      throw new UnauthorizedException(Messages.USER.FAILED.DISABLED);
+    }
+
     const isSamePassword = await bcrypt.compare(
       changePasswordFirstTimeDto.newPassword,
       user.password,

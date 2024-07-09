@@ -873,7 +873,14 @@ export class AssignmentService {
           id,
         },
       });
-
+      await this.prismaService.asset.update({
+        where: {
+          id: assignment.assetId,
+        },
+        data: {
+          state: AssetState.AVAILABLE,
+        },
+      });
       return {
         message: Messages.ASSIGNMENT.SUCCESS.DELETED,
       };

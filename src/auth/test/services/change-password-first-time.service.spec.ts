@@ -7,6 +7,7 @@ import {
 import { ChangePasswordFirstTimeDto } from 'src/auth/dto';
 import * as bcrypt from 'bcryptjs';
 import { AccountType, Location, UserStatus } from '@prisma/client';
+import { mockUser } from './config/mock-data';
 describe('AuthService', () => {
   beforeEach(async () => {
     await setupTestModule();
@@ -96,14 +97,15 @@ describe('AuthService', () => {
       expect(mockPrismaService.account.update).not.toHaveBeenCalled();
     });
 
-    it('should throw UnauthorizedException if user not found', async () => {
+    it('should throw UnauthorizedException if user is disabled', async () => {
       const changePasswordFirstTimeDto: ChangePasswordFirstTimeDto = {
         newPassword: 'newpassword',
       };
 
-      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue(
-        null,
-      );
+      (mockPrismaService.account.findUnique as jest.Mock).mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.DISABLED,
+      });
 
       await expect(
         service.changePasswordFirstTime(
