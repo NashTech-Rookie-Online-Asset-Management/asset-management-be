@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { AssignmentState } from '@prisma/client';
+import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsDateString,
   IsEnum,
   IsNotEmpty,
@@ -30,6 +33,11 @@ export class AssignmentDto {
   @ApiPropertyOptional()
   @Length(0, 256)
   note: string;
+
+  @IsDateString()
+  @ApiProperty()
+  @IsOptional()
+  updatedAt?: Date | string;
 }
 
 export enum UserSortKey {
@@ -42,6 +50,16 @@ export enum AssetSortKey {
   ASSET_CODE = 'assetCode',
   ASSET_NAME = 'name',
   ASSET_CATEGORY = 'category',
+}
+
+export enum AssignmentSortKey {
+  ID = 'id',
+  ASSET_CODE = 'assetCode',
+  ASSET_NAME = 'assetName',
+  ASSIGNED_TO = 'assignedTo',
+  ASSIGNED_BY = 'assignedBy',
+  ASSIGNED_DATE = 'assignedDate',
+  STATE = 'state',
 }
 
 export class UserPaginationDto extends PaginationDto {
@@ -66,4 +84,28 @@ export class AssetPaginationDto extends PaginationDto {
     enum: AssetSortKey,
   })
   readonly sortField: AssetSortKey = AssetSortKey.ASSET_CODE;
+}
+
+export class AssignmentPaginationDto extends PaginationDto {
+  @IsEnum(AssignmentSortKey)
+  @IsOptional()
+  @ApiPropertyOptional({
+    enum: AssignmentSortKey,
+  })
+  readonly sortField: AssignmentSortKey = AssignmentSortKey.ID;
+
+  @IsDateString()
+  @IsOptional()
+  @ApiPropertyOptional()
+  date?: string;
+
+  @ApiPropertyOptional()
+  @IsArray()
+  @IsEnum(AssignmentState, { each: true })
+  @IsOptional()
+  @Transform(({ value }) => value.split(','))
+  readonly states?: AssignmentState[] = [
+    AssignmentState.ACCEPTED,
+    AssignmentState.WAITING_FOR_ACCEPTANCE,
+  ];
 }

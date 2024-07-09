@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AccountType, UserStatus } from '@prisma/client';
@@ -27,6 +28,11 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException(Messages.AUTH.FAILED.INACTIVE);
     }
 
-    return requiredRoles.some((role) => user.type?.includes(role));
+    const hasRole = requiredRoles.some((role) => user.type?.includes(role));
+    if (!hasRole) {
+      throw new ForbiddenException(Messages.AUTH.FAILED.DO_NOT_HAVE_PERMISSION);
+    }
+
+    return true;
   }
 }

@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -20,13 +21,24 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { UserType } from 'src/users/types';
 import { AssetService } from './asset.service';
 import { AssetPageOptions, CreateAssetDto, UpdateAssetDto } from './dto';
+import { BaseController } from 'src/common/base/base.controller';
+import { ReportPaginationDto } from 'src/report/dto';
+import { ReportService } from 'src/report/report.service';
+import { FileFormat } from 'src/common/constants/file-format';
+import { Response } from 'express';
+import { formatDate } from 'src/common/utils';
 
 @Controller('assets')
 @ApiTags('ASSETS')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(AccountType.ADMIN, AccountType.ROOT)
-export class AssetController {
-  constructor(private readonly assetService: AssetService) {}
+export class AssetController extends BaseController {
+  constructor(
+    private readonly assetService: AssetService,
+    private readonly reportService: ReportService,
+  ) {
+    super();
+  }
 
   @Get()
   getAssets(
@@ -34,6 +46,32 @@ export class AssetController {
     @Query() dto: AssetPageOptions,
   ) {
     return this.assetService.getAssets(location, dto);
+  }
+
+  @Get('/report')
+  getReport(
+    @Query() dto: ReportPaginationDto,
+    @GetUser('location') location: Location,
+  ) {
+    return this.reportService.selectMany(dto, location);
+  }
+
+  @Get('/report/export')
+  async getReportFile(
+    @Query('format') format: FileFormat,
+    @GetUser('location') location: Location,
+    @Res() res: Response,
+  ) {
+    const buffer = (await this.reportService.export(
+      format,
+      location,
+    )) as Buffer;
+
+    res.set(
+      'Content-Disposition',
+      `attachment; filename=OAM Report ${formatDate(new Date())}.${format}`,
+    );
+    return res.send(buffer);
   }
 
   @Get(':id')
@@ -49,7 +87,11 @@ export class AssetController {
     @GetUser('location') location: Location,
     @Body() createAssetDto: CreateAssetDto,
   ) {
-    return this.assetService.create(location, createAssetDto);
+    const event = this.actionQueue.createEvent(() =>
+      this.assetService.create(location, createAssetDto),
+    );
+    this.actionQueue.push(event);
+    return this.actionQueue.wait(event.rqid);
   }
 
   @Patch(':id')

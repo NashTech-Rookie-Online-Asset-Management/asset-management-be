@@ -1,4 +1,5 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
+import { Messages } from '../constants';
 
 export function IsValidName(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -21,7 +22,8 @@ export function IsValidName(validationOptions?: ValidationOptions) {
           return true;
         },
         defaultMessage() {
-          return 'Name must be a string between 1 and 128 characters long and must not contain special characters';
+          return Messages.USER.FAILED
+            .NAME_TOO_LONG_OR_CONTAIN_SPECIAL_CHARACTOR;
         },
       },
     });

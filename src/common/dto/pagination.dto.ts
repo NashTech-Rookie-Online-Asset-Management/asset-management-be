@@ -11,15 +11,16 @@ export class PaginationDto {
   @IsOptional()
   readonly page?: number = 1;
 
+  @IsOptional()
   @ApiPropertyOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(MAX_PAGE_SIZE)
-  @IsOptional()
   readonly take?: number = MAX_PAGE_SIZE;
 
   get skip(): number {
+    if (!this.take) return 0;
     return (this.page - 1) * this.take;
   }
 

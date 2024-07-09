@@ -8,22 +8,41 @@ export class CategoryService {
   constructor(private readonly prismaService: PrismaService) {}
   async create(createCategoryDto: CreateCategoryDto) {
     const { name, prefix } = createCategoryDto;
-    const existingCategory = await this.prismaService.category.findFirst({
-      where: {
-        OR: [{ name: name }, { prefix: prefix }],
-      },
-    });
-    if (existingCategory) {
-      if (existingCategory.name === name) {
-        throw new BadRequestException(Messages.CATEGORY.FAILED.NAME_EXIST);
+    try {
+      const existingCategory = await this.prismaService.category.findFirst({
+        where: {
+          OR: [
+            {
+              name: { equals: name, mode: 'insensitive' },
+            },
+            {
+              prefix: {
+                equals: prefix,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        },
+      });
+
+      if (existingCategory) {
+        if (
+          existingCategory.name?.toLocaleLowerCase() ===
+          name?.toLocaleLowerCase()
+        ) {
+          throw new BadRequestException(Messages.CATEGORY.FAILED.NAME_EXIST);
+        }
+        if (existingCategory.prefix.toUpperCase() === prefix.toUpperCase()) {
+          throw new BadRequestException(Messages.CATEGORY.FAILED.PREFIX_EXIST);
+        }
       }
-      if (existingCategory.prefix === prefix) {
-        throw new BadRequestException(Messages.CATEGORY.FAILED.PREFIX_EXIST);
-      }
+      const category = await this.prismaService.category.create({
+        data: createCategoryDto,
+      });
+      return category;
+    } catch (error) {
+      throw new BadRequestException(error.message);
     }
-    return this.prismaService.category.create({
-      data: createCategoryDto,
-    });
   }
 
   findAll() {

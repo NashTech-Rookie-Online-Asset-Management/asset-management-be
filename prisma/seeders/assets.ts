@@ -8,6 +8,7 @@ import {
   Prisma,
   PrismaClient,
 } from '@prisma/client';
+import seedConfig from '../seed-config';
 const prisma = new PrismaClient();
 
 export function createRandomAsset(): Prisma.AssetCreateInput {
@@ -25,14 +26,11 @@ export function createRandomAsset(): Prisma.AssetCreateInput {
 export const ASSETS: Prisma.AssetCreateInput[] = faker.helpers.multiple(
   createRandomAsset,
   {
-    count: {
-      min: 20,
-      max: 100,
-    },
+    count: seedConfig.asset.count,
   },
 );
 
-export async function seedAssets(categories: Category[]) {
+export async function seedAssets({ categories }: { categories: Category[] }) {
   const assets: Asset[] = [];
   for (const [index, asset] of ASSETS.entries()) {
     const category = faker.helpers.arrayElement(categories);
@@ -40,7 +38,7 @@ export async function seedAssets(categories: Category[]) {
       data: {
         ...asset,
         assetCode: `${category.prefix}${faker.string.numeric({
-          length: 6,
+          length: seedConfig.asset.assetCodeLength,
           allowLeadingZeros: true,
         })}`,
         category: {

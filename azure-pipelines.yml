@@ -21,8 +21,50 @@ variables:
   azureSubscription: azure-service-connection
 
 stages:
+- stage: Test
+  displayName: Test
+  jobs:
+    - job: Test
+      displayName: Test
+      steps:
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '>=20.0.0'
+          displayName: 'Install Node.js'
+        - script: |
+            npm i jest jest-junit jest-junit-reporter --save-dev
+            npm i @prisma/client
+            npx prisma generate
+            npm run test:ci
+          displayName: 'Npm install & test'
+        
+        - task: PublishTestResults@2
+          displayName: 'Publish Test Results'
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: 'coverage/report.xml'
+            mergeTestResults: true
+            failTaskOnFailedTests: true
+
+        - task: PublishCodeCoverageResults@1
+          displayName: 'Publish Code Coverage'
+          inputs:
+            codeCoverageTool: 'Cobertura'
+            summaryFileLocation: 'coverage/cobertura-coverage.xml'
+            reportDirectory: 'coverage'
+            failIfCoverageEmpty: true
+
+        - task: BuildQualityChecks@9
+          inputs:
+            checkCoverage: true
+            coverageFailOption: 'fixed'
+            coverageType: 'lines'
+            coverageThreshold: '85'
+
 - stage: Build
   displayName: Build 
+  dependsOn: Test
+  condition: succeeded()
   jobs:
   - job: Build
     displayName: Build 

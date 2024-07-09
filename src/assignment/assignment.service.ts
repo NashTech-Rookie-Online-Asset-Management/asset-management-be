@@ -1,62 +1,194 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { LockService } from 'src/lock/lock.service';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   Account,
   AccountType,
   AssetState,
+  Assignment,
   AssignmentState,
+  Location,
+  RequestState,
   UserStatus,
 } from '@prisma/client';
+
+import { AssetService } from 'src/asset/asset.service';
+import { Messages } from 'src/common/constants';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from 'src/users/types';
 import {
   AssetPaginationDto,
   AssetSortKey,
   AssignmentDto,
+  AssignmentPaginationDto as AdminAssignmentPaginationDto,
+  AssignmentSortKey as AdminAssignmentSortKey,
   UserPaginationDto,
 } from './assignment.dto';
-import { Messages } from 'src/common/constants';
-import { AssetService } from 'src/asset/asset.service';
+import {
+  AssignmentPaginationDto,
+  AssignmentSortKey,
+  ResponseAssignmentDto,
+} from './dto';
 
 @Injectable()
 export class AssignmentService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly assetService: AssetService,
+    private readonly LockService: LockService,
   ) {}
 
-  getAll(user: Account) {
-    return this.prismaService.assignment.findMany({
-      where: {
-        assignedBy: {
-          location: user.location,
-        },
+  async getAll(user: Account, dto: AdminAssignmentPaginationDto) {
+    let orderBy = {};
+    switch (dto.sortField) {
+      case AdminAssignmentSortKey.ASSET_CODE:
+        orderBy = {
+          asset: {
+            assetCode: dto.sortOrder,
+          },
+        };
+        break;
+      case AdminAssignmentSortKey.ASSET_NAME:
+        orderBy = {
+          asset: {
+            name: dto.sortOrder,
+          },
+        };
+        break;
+      case AdminAssignmentSortKey.ASSIGNED_TO:
+        orderBy = {
+          assignedTo: {
+            username: dto.sortOrder,
+          },
+        };
+        break;
+      case AdminAssignmentSortKey.ASSIGNED_BY:
+        orderBy = {
+          assignedBy: {
+            username: dto.sortOrder,
+          },
+        };
+        break;
+      default:
+        orderBy = {
+          [dto.sortField]: dto.sortOrder,
+        };
+        break;
+    }
+
+    const where = {
+      assignedBy: {
+        location: user.location,
       },
-      include: {
-        assignedBy: {
-          select: {
-            staffCode: true,
-            fullName: true,
-            type: true,
-            location: true,
-          },
-        },
-        asset: {
-          select: {
-            assetCode: true,
-            name: true,
-            category: true,
-            location: true,
-          },
-        },
-        assignedTo: {
-          select: {
-            staffCode: true,
-            fullName: true,
-            type: true,
-            location: true,
-          },
-        },
+      assignedTo: {
+        location: user.location,
       },
-    });
+      asset: {
+        location: user.location,
+      },
+      AND: [
+        {
+          state: {
+            in: dto.states,
+          },
+        },
+      ],
+      OR: [
+        {
+          asset: {
+            OR: [
+              {
+                assetCode: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                name: {
+                  contains: dto.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+            ],
+          },
+        },
+        {
+          assignedTo: {
+            username: {
+              contains: dto.search,
+              mode: 'insensitive' as const,
+            },
+          },
+        },
+      ],
+    };
+
+    if (dto.date) {
+      const dtoDate = new Date(dto.date);
+      const tomorrow = new Date(dtoDate);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      where.AND.push({
+        assignedDate: {
+          gte: dtoDate,
+          lt: tomorrow,
+        },
+      } as any);
+    }
+
+    const [count, data] = await Promise.all([
+      this.prismaService.assignment.count({ where }),
+      this.prismaService.assignment.findMany({
+        where,
+        orderBy,
+        take: dto.take,
+        skip: dto.skip,
+        include: {
+          assignedBy: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+              location: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        totalPages: Math.ceil(count / dto.take),
+        totalCount: count,
+      },
+    };
   }
 
   async getAvailableUser(user: Account, pagination: UserPaginationDto) {
@@ -89,46 +221,26 @@ export class AssignmentService {
           status: UserStatus.DISABLED,
         },
       ],
+      OR: [
+        {
+          fullName: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          staffCode: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+      ],
     };
 
     const [count, data] = await Promise.all([
-      this.prismaService.account.count({
-        where: {
-          ...where,
-          OR: [
-            {
-              fullName: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              staffCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-      }),
+      this.prismaService.account.count({ where }),
       this.prismaService.account.findMany({
-        where: {
-          ...where,
-          OR: [
-            {
-              fullName: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              staffCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
+        where,
         orderBy: [
           {
             [pagination.sortField]: pagination.sortOrder,
@@ -159,6 +271,20 @@ export class AssignmentService {
     const where = {
       state: AssetState.AVAILABLE,
       location: user.location,
+      OR: [
+        {
+          assetCode: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          name: {
+            contains: search,
+            mode: 'insensitive' as const,
+          },
+        },
+      ],
     };
 
     const orderBy = [];
@@ -178,47 +304,11 @@ export class AssignmentService {
     }
 
     const [count, data] = await Promise.all([
-      this.prismaService.asset.count({
-        where: {
-          ...where,
-          OR: [
-            {
-              assetCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-      }),
+      this.prismaService.asset.count({ where }),
 
       this.prismaService.asset.findMany({
-        where: {
-          ...where,
-          OR: [
-            {
-              assetCode: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-            {
-              name: {
-                contains: search,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        },
-
+        where,
         orderBy,
-
         include: {
           category: true,
         },
@@ -236,8 +326,8 @@ export class AssignmentService {
     };
   }
 
-  getOne(user: Account, id: number) {
-    return this.prismaService.assignment.findFirst({
+  async getOne(user: Account, id: number) {
+    const result = await this.prismaService.assignment.findFirst({
       where: {
         id,
         assignedBy: {
@@ -251,6 +341,16 @@ export class AssignmentService {
         assignedTo: {
           select: {
             staffCode: true,
+            username: true,
+            fullName: true,
+            type: true,
+            location: true,
+          },
+        },
+        assignedBy: {
+          select: {
+            staffCode: true,
+            username: true,
             fullName: true,
             type: true,
             location: true,
@@ -260,12 +360,27 @@ export class AssignmentService {
           select: {
             assetCode: true,
             name: true,
+            specification: true,
             category: true,
             location: true,
           },
         },
       },
     });
+
+    if (!result)
+      throw new NotFoundException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+
+    if (
+      user.type === AccountType.STAFF &&
+      result.assignedTo.staffCode !== user.staffCode
+    ) {
+      throw new ForbiddenException(Messages.ASSIGNMENT.FAILED.NOT_YOUR);
+    }
+
+    return result;
   }
 
   async create(createdUser: Account, dto: AssignmentDto) {
@@ -292,6 +407,34 @@ export class AssignmentService {
             },
           },
         },
+        include: {
+          assignedBy: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+              location: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+        },
       }),
 
       this.assetService.updateState(dto.assetCode, AssetState.ASSIGNED),
@@ -301,57 +444,109 @@ export class AssignmentService {
   }
 
   async update(editUser: Account, id: number, dto: AssignmentDto) {
-    const assignment = await this.prismaService.assignment.findFirst({
-      where: { id },
-      include: {
-        asset: true,
-      },
-    });
-
-    if (!assignment) {
-      throw new BadRequestException(
-        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
-      );
-    }
-
-    if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
-      throw new BadRequestException(
-        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
-      );
-    }
-
-    const isDifferentAsset = assignment.asset.assetCode !== dto.assetCode;
-    await this.validate(editUser, dto, isDifferentAsset);
-
-    await this.assetService.updateState(
-      assignment.asset.assetCode,
-      AssetState.AVAILABLE,
+    const lockAcquired = await this.LockService.acquireLock(
+      `assignment-${id}`,
+      5,
     );
-    await this.assetService.updateState(dto.assetCode, AssetState.ASSIGNED);
+    if (!lockAcquired) {
+      throw new ConflictException(Messages.ASSIGNMENT.FAILED.CONCURRENT_UPDATE);
+    }
+    try {
+      const assignment = await this.prismaService.assignment.findFirst({
+        where: { id },
+        include: {
+          asset: true,
+        },
+      });
 
-    return this.prismaService.assignment.update({
-      where: { id },
-      data: {
-        assignedDate: new Date(dto.assignedDate),
-        note: dto.note,
-        assignedTo: {
-          connect: {
-            staffCode: dto.staffCode,
+      if (!assignment) {
+        throw new BadRequestException(
+          Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+        );
+      }
+
+      if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
+        throw new BadRequestException(
+          Messages.ASSIGNMENT.FAILED.ASSIGNMENT_ALREADY_CLOSED,
+        );
+      }
+      if (dto.updatedAt) {
+        const newDate = new Date(dto.updatedAt);
+        if (assignment.updatedAt.getTime() !== newDate.getTime()) {
+          throw new BadRequestException(Messages.ASSIGNMENT.FAILED.DATA_EDITED);
+        }
+      }
+      await this.validate(editUser, dto, assignment);
+
+      await this.assetService.updateState(
+        assignment.asset.assetCode,
+        AssetState.AVAILABLE,
+      );
+      await this.assetService.updateState(dto.assetCode, AssetState.ASSIGNED);
+
+      return this.prismaService.assignment.update({
+        where: { id },
+        data: {
+          assignedDate: new Date(dto.assignedDate),
+          note: dto.note,
+          assignedTo: {
+            connect: {
+              staffCode: dto.staffCode,
+            },
+          },
+          asset: {
+            connect: {
+              assetCode: dto.assetCode,
+            },
           },
         },
-        asset: {
-          connect: {
-            assetCode: dto.assetCode,
+        include: {
+          assignedBy: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+              location: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              username: true,
+              staffCode: true,
+              fullName: true,
+              type: true,
+              location: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      throw new HttpException(
+        {
+          message: error.message,
+          error: error.response.error,
+          statusCode: error.response.statusCode,
+        },
+        error.getStatus(),
+        error.getResponse(),
+      );
+    } finally {
+      await this.LockService.releaseLock(`assignment-${id}`);
+    }
   }
-
   private async validate(
     createdUser: Account,
     dto: AssignmentDto,
-    isDifferentAsset = true,
+    editAssignment?: Assignment,
   ) {
     const asset = await this.prismaService.asset.findUnique({
       where: {
@@ -386,6 +581,9 @@ export class AssignmentService {
     }
 
     // Check asset is available
+    const isDifferentAsset = editAssignment
+      ? editAssignment.assetId !== asset.id
+      : true;
     if (isDifferentAsset && asset.state !== AssetState.AVAILABLE) {
       throw new BadRequestException(
         Messages.ASSIGNMENT.FAILED.ASSET_NOT_AVAILABLE,
@@ -419,12 +617,275 @@ export class AssignmentService {
     }
 
     // Check if assignment date is in the past
+    // Only check when create new assignment or change assigned date
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    if (new Date(dto.assignedDate) <= yesterday) {
+    if (
+      dto.assignedDate !== editAssignment?.assignedDate.toISOString() &&
+      new Date(dto.assignedDate) <= yesterday
+    ) {
       throw new BadRequestException(
         Messages.ASSIGNMENT.FAILED.DATE_IN_THE_PAST,
       );
+    }
+  }
+
+  async requestReturn(user: UserType, assignmentId: number) {
+    const assignment = await this.prismaService.assignment.findUnique({
+      where: {
+        id: assignmentId,
+      },
+      include: {
+        asset: true,
+        assignedTo: true,
+      },
+    });
+
+    if (!assignment) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    }
+
+    if (
+      user.type !== AccountType.ROOT &&
+      user.location !== assignment.assignedTo.location
+    ) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.USER_NOT_IN_SAME_LOCATION,
+      );
+    }
+
+    if (assignment.state !== AssignmentState.ACCEPTED) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.NOT_ACCEPTED);
+    }
+
+    if (
+      user.type === AccountType.STAFF &&
+      user.staffCode !== assignment.assignedTo.staffCode
+    ) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.NOT_YOURS);
+    }
+    const returnRequest = await this.prismaService.returningRequest.create({
+      data: {
+        assignmentId: assignment.id,
+        requestedById: user.id,
+        acceptedById: null,
+        returnedDate: null,
+        state: RequestState.WAITING_FOR_RETURNING,
+      },
+    });
+    await this.prismaService.assignment.update({
+      where: { id: assignment.id },
+      data: { state: AssignmentState.IS_REQUESTED },
+    });
+    return returnRequest;
+  }
+
+  async responseAssignedAssignment(
+    user: UserType,
+    assignmentId: number,
+    dto: ResponseAssignmentDto,
+  ) {
+    const { state } = dto;
+    const assignment = await this.prismaService.assignment.findUnique({
+      where: {
+        id: assignmentId,
+      },
+      include: {
+        asset: true,
+        assignedTo: true,
+      },
+    });
+    if (!assignment) {
+      throw new NotFoundException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    }
+    if (
+      user.type !== AccountType.ROOT &&
+      user.location !== assignment.assignedTo.location
+    ) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.USER_NOT_IN_SAME_LOCATION,
+      );
+    }
+
+    if (assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE) {
+      throw new BadRequestException(
+        Messages.ASSIGNMENT.FAILED.NOT_WAITING_FOR_ACCEPTANCE,
+      );
+    }
+
+    if (
+      user.type !== AccountType.ROOT &&
+      user.staffCode !== assignment.assignedTo.staffCode
+    ) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.NOT_YOURS);
+    }
+
+    if (state) {
+      await this.prismaService.assignment.update({
+        where: { id: assignment.id },
+        data: { state: AssignmentState.ACCEPTED },
+      });
+
+      return { message: Messages.ASSIGNMENT.SUCCESS.ACCEPTED };
+    } else {
+      await this.prismaService.assignment.update({
+        where: { id: assignment.id },
+        data: { state: AssignmentState.DECLINED },
+      });
+
+      await this.prismaService.asset.update({
+        where: {
+          id: assignment.assetId,
+        },
+        data: {
+          state: AssetState.AVAILABLE,
+        },
+      });
+      return { message: Messages.ASSIGNMENT.SUCCESS.DECLINED };
+    }
+  }
+
+  async getUserAssignments(
+    user: UserType,
+    pagination: AssignmentPaginationDto,
+  ) {
+    const currentDate = new Date();
+    const orderBy = [];
+
+    if (pagination.sortField && pagination.sortOrder) {
+      switch (pagination.sortField) {
+        case AssignmentSortKey.ASSET_CODE:
+          orderBy.push({ asset: { assetCode: pagination.sortOrder } });
+          break;
+        case AssignmentSortKey.ASSET_NAME:
+          orderBy.push({ asset: { name: pagination.sortOrder } });
+          break;
+        case AssignmentSortKey.CATEGORY:
+          orderBy.push({ asset: { category: { name: pagination.sortOrder } } });
+          break;
+        case AssignmentSortKey.ASSIGNED_DATE:
+          orderBy.push({ assignedDate: pagination.sortOrder });
+          break;
+        default:
+          orderBy.push({ state: pagination.sortOrder });
+          break;
+      }
+    }
+    const whereConditions = {
+      assignedToId: user.id,
+      assignedDate: {
+        lte: currentDate,
+      },
+      state: {
+        not: AssignmentState.DECLINED,
+      },
+      OR: [
+        { returningRequest: null },
+        { returningRequest: { state: { not: RequestState.COMPLETED } } },
+      ],
+      ...(pagination.search && {
+        asset: {
+          name: {
+            contains: pagination.search,
+            mode: 'insensitive' as const,
+          },
+        },
+      }),
+    };
+    const [count, assignments] = await Promise.all([
+      this.prismaService.assignment.count({
+        where: whereConditions,
+      }),
+
+      this.prismaService.assignment.findMany({
+        where: whereConditions,
+        orderBy,
+        skip: pagination.skip,
+        take: pagination.take,
+        include: {
+          assignedBy: {
+            select: {
+              staffCode: true,
+              fullName: true,
+            },
+          },
+          asset: {
+            select: {
+              assetCode: true,
+              name: true,
+              category: true,
+            },
+          },
+        },
+      }),
+    ]);
+    return {
+      data: assignments,
+      pagination: {
+        totalPages: Math.ceil(count / pagination.take),
+        totalCount: count,
+      },
+    };
+  }
+
+  async delete(location: Location, id: number) {
+    if (!Object.values(Location).includes(location)) {
+      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    }
+
+    const assignment = await this.prismaService.assignment.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        asset: {
+          select: {
+            location: true,
+          },
+        },
+      },
+    });
+
+    if (!assignment) {
+      throw new NotFoundException(
+        Messages.ASSIGNMENT.FAILED.ASSIGNMENT_NOT_FOUND,
+      );
+    }
+
+    if (assignment.asset.location !== location) {
+      throw new ForbiddenException(Messages.ASSIGNMENT.FAILED.ACCESS_DENIED);
+    }
+
+    if (
+      assignment.state !== AssignmentState.WAITING_FOR_ACCEPTANCE &&
+      assignment.state !== AssignmentState.DECLINED
+    ) {
+      throw new BadRequestException(Messages.ASSIGNMENT.FAILED.DELETE_DENIED);
+    }
+
+    try {
+      await this.prismaService.assignment.delete({
+        where: {
+          id,
+        },
+      });
+      await this.prismaService.asset.update({
+        where: {
+          id: assignment.assetId,
+        },
+        data: {
+          state: AssetState.AVAILABLE,
+        },
+      });
+      return {
+        message: Messages.ASSIGNMENT.SUCCESS.DELETED,
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
   }
 }

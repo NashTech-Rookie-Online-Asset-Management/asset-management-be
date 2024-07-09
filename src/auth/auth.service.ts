@@ -53,6 +53,10 @@ export class AuthService {
       Messages.USER.FAILED.NOT_FOUND,
     );
 
+    if (user.status === UserStatus.DISABLED) {
+      throw new UnauthorizedException(Messages.USER.FAILED.DISABLED);
+    }
+
     const isSamePassword = await bcrypt.compare(
       changePasswordFirstTimeDto.newPassword,
       user.password,
@@ -115,11 +119,9 @@ export class AuthService {
     }
 
     try {
-      const decodeToken = this.jwtService.verify(refreshToken, {
-        ignoreExpiration: true,
-      });
+      const decodeToken = this.jwtService.verify(refreshToken);
       const user = await this.findUser(
-        { staffCode: decodeToken.staffCode },
+        { staffCode: decodeToken?.staffCode },
         Messages.USER.FAILED.NOT_FOUND,
       );
 

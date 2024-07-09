@@ -10,6 +10,8 @@ export const Messages = {
       PASSWORD_NOT_CORRECT: 'Password is incorrect',
       PASSWORD_NOT_SAME: 'Old password and New password should not be the same',
       INACTIVE: 'This account is inactive',
+      DO_NOT_HAVE_PERMISSION:
+        'You do not have permission to access this resource',
     },
     VALIDATE: {
       USER_NAME: 'Username is required',
@@ -60,6 +62,13 @@ export const Messages = {
       VIEW_NOT_HAVE_RIGHT:
         'You do not have enough permission to view this user.',
       VIEW_SELF: 'You are not allowed to view yourself currently',
+      DATA_EDITED:
+        'Data has been edited. Please reload the page to see the latest data',
+      CONCURRENT_UPDATE:
+        'Another admin is updating this user. Please try again later',
+      NAME_TOO_LONG_OR_CONTAIN_SPECIAL_CHARACTOR:
+        'Name must be a string between 1 and 128 characters long and must not contain special characters',
+      INVALID_LOCATION: 'Invalid location',
     },
     VALIDATE: {
       DOB: 'Date of Birth is required',
@@ -88,6 +97,10 @@ export const Messages = {
       ASSET_STATE_INVALID: 'Invalid asset state',
       UPDATE_NOT_SAME_LOCATION:
         'You can only update the asset within the same location',
+      CONCURRENT_UPDATE:
+        'Another admin is updating this asset. Please try again later',
+      DATA_EDITED:
+        'Data has been edited. Please reload the page to see the latest data',
     },
     VALIDATE: {
       NAME: 'Name is required',
@@ -128,7 +141,11 @@ export const Messages = {
     },
   },
   ASSIGNMENT: {
-    SUCCESS: {},
+    SUCCESS: {
+      ACCEPTED: 'Accepted assignment successfully',
+      DECLINED: 'Declined assignment successfully',
+      DELETED: 'Deleted assignment successfully',
+    },
     FAILED: {
       USER_DISABLED: 'User is disabled',
       USER_NOT_FOUND: 'User is not found',
@@ -142,6 +159,41 @@ export const Messages = {
       ASSIGNMENT_NOT_FOUND: 'Assignment not found',
       ASSIGNMENT_ALREADY_CLOSED: 'Assignment is already closed',
       ASSIGNMENT_NOT_YOURS: 'You do not have right to edit to this assignment',
+      NOT_ACCEPTED: 'Assignment is not accepted',
+      NOT_WAITING_FOR_ACCEPTANCE: 'Assignment is not waiting for acceptance',
+      NOT_YOURS: 'Assignment is not yours',
+      NOT_YOUR: 'This is not your assignment',
+      ACCESS_DENIED: 'You do not have access to this assignment',
+      DELETE_DENIED: 'Cannot delete this assignment',
+      CONCURRENT_UPDATE:
+        'Another admin is updating this assignment. Please try again later',
+      DATA_EDITED:
+        'Data has been edited. Please reload the page to see the latest data',
+    },
+    VALIDATE: {
+      STATE: 'State is required',
+      STATE_INVALID: 'Invalid state',
+    },
+  },
+  RETURNING_REQUEST: {
+    SUCCESS: {
+      CANCELLED: 'Returning request cancelled successfully',
+      CONFIRMED: 'Returning request confirmed successfully',
+    },
+    FAILED: {
+      USER_DISABLED: 'User is disabled',
+      USER_NOT_FOUND: 'User is not found',
+      RETURNING_REQUEST_NOT_FOUND: 'Returning request not found',
+      RETURNING_REQUEST_ALREADY_CLOSED: 'Returning request is already closed',
+      RETURNING_REQUEST_NOT_YOURS:
+        'You do not have right to edit to this returning request',
+      NOT_FOUND: 'Returning request not found',
+      INVALID_STATE: 'Invalid state',
+      INVALID_LOCATION: 'Invalid location',
+    },
+    VALIDATE: {
+      STATE: 'State is required',
+      STATE_INVALID: 'Invalid state',
     },
   },
 };

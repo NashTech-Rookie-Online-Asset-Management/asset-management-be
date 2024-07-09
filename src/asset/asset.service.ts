@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AccountType, AssetState, Location } from '@prisma/client';
 import { Messages } from 'src/common/constants';
+import { LockService } from 'src/lock/lock.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserType } from 'src/users/types';
 import { AssetPageOptions, UpdateAssetDto } from './dto';
@@ -16,7 +17,10 @@ import { CreateAssetDto } from './dto/create-asset.dto';
 
 @Injectable()
 export class AssetService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly lockService: LockService,
+  ) {}
 
   async getAssets(location: Location, dto: AssetPageOptions) {
     if (!Object.values(Location).includes(location)) {
@@ -141,6 +145,7 @@ export class AssetService {
             name: true,
           },
         },
+        updatedAt: true,
         installedDate: true,
         state: true,
         location: true,
@@ -228,6 +233,11 @@ export class AssetService {
               prefix: true,
             },
           },
+          assignments: {
+            select: {
+              id: true,
+            },
+          },
         },
       });
       return newAsset;
@@ -245,11 +255,16 @@ export class AssetService {
   }
 
   async update(admin: UserType, id: number, dto: UpdateAssetDto) {
+    const lockAcquired = await this.lockService.acquireLock(`asset-${id}`, 5);
+    if (!lockAcquired) {
+      throw new ConflictException(Messages.ASSET.FAILED.CONCURRENT_UPDATE);
+    }
     try {
-      const { installedDate } = dto;
+      const { installedDate, updatedAt } = dto;
       if (installedDate) {
         dto.installedDate = new Date(installedDate);
       }
+
       const asset = await this.prismaService.asset.findUnique({
         where: {
           id,
@@ -258,6 +273,14 @@ export class AssetService {
       if (!asset) {
         throw new NotFoundException(Messages.ASSET.FAILED.NOT_FOUND);
       }
+
+      if (updatedAt) {
+        const newDate = new Date(updatedAt);
+        if (asset.updatedAt.getTime() !== newDate.getTime()) {
+          throw new BadRequestException(Messages.ASSET.FAILED.DATA_EDITED);
+        }
+      }
+
       if (
         admin.location !== asset.location &&
         admin.type === AccountType.ADMIN
@@ -280,12 +303,13 @@ export class AssetService {
           );
         }
       }
-      return await this.prismaService.asset.update({
+      const updatedAsset = await this.prismaService.asset.update({
         where: {
           id,
         },
         data: {
           ...dto,
+          updatedAt: undefined,
         },
         select: {
           id: true,
@@ -301,6 +325,8 @@ export class AssetService {
           },
         },
       });
+
+      return updatedAsset;
     } catch (error) {
       throw new HttpException(
         {
@@ -311,6 +337,8 @@ export class AssetService {
         error.getStatus(),
         error.getResponse(),
       );
+    } finally {
+      this.lockService.releaseLock(`asset-${id}`);
     }
   }
 

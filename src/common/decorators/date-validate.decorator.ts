@@ -6,6 +6,16 @@ import {
 import { isAtLeast18YearsAfter, isOlderThan18 } from '../utils';
 import { Messages } from '../constants';
 
+function isValidDate(value: string): boolean {
+  try {
+    const date = new Date(value);
+    const dateString = date.toISOString().substring(0, 10);
+    return value === dateString;
+  } catch (error) {
+    return false;
+  }
+}
+
 export function IsOlderThan18(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
     registerDecorator({
@@ -39,12 +49,16 @@ export function IsValidJoinedDate(validationOptions?: ValidationOptions) {
           const joinedAt = new Date(value);
           const dob = new Date((args.object as any)[args.constraints[0]]);
 
-          if (!isAtLeast18YearsAfter(dob, joinedAt)) {
+          if (!isValidDate(value)) {
             return false;
           }
 
           // Check if joinedAt is later than dob
           if (joinedAt <= dob) {
+            return false;
+          }
+
+          if (!isAtLeast18YearsAfter(dob, joinedAt)) {
             return false;
           }
 

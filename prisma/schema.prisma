@@ -76,14 +76,14 @@ model ReturningRequest {
   id            Int          @id @default(autoincrement())
   assignmentId  Int          @unique
   requestedById Int
-  acceptedById  Int
-  returnedDate  DateTime
+  acceptedById  Int?
+  returnedDate  DateTime?
   state         RequestState
-  createdAt     DateTime
-  updatedAt     DateTime
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   assignment    Assignment   @relation(fields: [assignmentId], references: [id])
   requestedBy   Account      @relation("requestedBy", fields: [requestedById], references: [id])
-  acceptedBy    Account      @relation("acceptedBy", fields: [acceptedById], references: [id])
+  acceptedBy    Account?     @relation("acceptedBy", fields: [acceptedById], references: [id])
 }
 
 enum AccountType {
@@ -118,12 +118,13 @@ enum AssetState {
 }
 
 enum AssignmentState {
-  WAITING_FOR_ACCEPTANCE
   ACCEPTED
+  DECLINED
   IS_REQUESTED
+  WAITING_FOR_ACCEPTANCE
 }
 
 enum RequestState {
-  WAITING_FOR_RETURNING
   COMPLETED
+  WAITING_FOR_RETURNING
 }

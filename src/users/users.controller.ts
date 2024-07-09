@@ -17,19 +17,26 @@ import { GetUser, Roles } from '../common/decorators';
 import { Account, AccountType } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
 import { UpdateUserDto, UserPaginationDto } from './dto';
-import { Location } from '@prisma/client';
 import { User } from 'src/common/decorators/user.decorator';
 import { UserType } from './types';
+import { BaseController } from 'src/common/base/base.controller';
+
 @Controller('users')
 @ApiTags('USERS')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(AccountType.ROOT, AccountType.ADMIN)
-export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+export class UsersController extends BaseController {
+  constructor(private readonly usersService: UsersService) {
+    super();
+  }
 
   @Post()
   create(@User() admin: UserType, @Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(admin, createUserDto);
+    const event = this.actionQueue.createEvent(() =>
+      this.usersService.create(admin, createUserDto),
+    );
+    this.actionQueue.push(event);
+    return this.actionQueue.wait(event.rqid);
   }
 
   @Patch(':staffCode')
@@ -44,18 +51,18 @@ export class UsersController {
   @Get()
   async getUsers(
     @GetUser('username') username: string,
-    @GetUser('location') location: Location,
+    @User() admin: UserType,
     @Query() dto: UserPaginationDto,
   ) {
-    return this.usersService.selectMany(username, location, dto);
+    return this.usersService.selectMany(username, admin, dto);
   }
 
-  @Get(':username')
+  @Get(':staffCode')
   async getUser(
-    @Param('username') username: string,
+    @Param('staffCode') staffCode: string,
     @User() user: Partial<Account>,
   ) {
-    return this.usersService.selectOne(username, user);
+    return this.usersService.selectOne(staffCode, user);
   }
 
   @Delete(':staffCode')

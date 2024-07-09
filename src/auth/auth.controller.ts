@@ -20,21 +20,18 @@ import {
 import { CookieOptions, Response } from 'express';
 import { ApiTags } from '@nestjs/swagger';
 import { Cookies, Messages } from 'src/common/constants';
-
-const cookieOptions: CookieOptions =
-  process.env.NODE_ENV === 'production'
-    ? {
-        httpOnly: true,
-        sameSite: 'none',
-        secure: true,
-      }
-    : {
-        httpOnly: true,
-      };
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Roles } from 'src/common/decorators';
+import { AccountType } from '@prisma/client';
+import { getCookieOptions } from 'src/common/utils/cookie';
 
 @Controller('auth')
 @ApiTags('AUTH')
 export class AuthController {
+  private readonly cookieOptions: CookieOptions = getCookieOptions(
+    process.env.NODE_ENV,
+  );
+
   constructor(private readonly authService: AuthService) {}
 
   @UseGuards(JwtAuthGuard)
@@ -51,17 +48,18 @@ export class AuthController {
     const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
     res.cookie(Cookies.USER, auth.payload, {
       expires: oneHourFromNow,
-      ...cookieOptions,
+      ...this.cookieOptions,
     });
     res.cookie(Cookies.ACCESS_TOKEN, auth.accessToken, {
       expires: oneHourFromNow,
-      ...cookieOptions,
+      ...this.cookieOptions,
     });
 
     return { accessToken: auth?.accessToken, refreshToken: auth?.refreshToken };
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(AccountType.ADMIN, AccountType.STAFF, AccountType.ROOT)
   @Patch('change-password')
   changePassword(
     @GetUser('staffCode') staffCode: string,
@@ -87,11 +85,11 @@ export class AuthController {
     const oneHourFromNow = new Date(Date.now() + 60 * 60 * 1000);
     res.cookie(Cookies.USER, userUpdated.payload, {
       expires: oneHourFromNow,
-      ...cookieOptions,
+      ...this.cookieOptions,
     });
     res.cookie(Cookies.ACCESS_TOKEN, userUpdated.accessToken, {
       expires: oneHourFromNow,
-      ...cookieOptions,
+      ...this.cookieOptions,
     });
     return res.json({ message: Messages.AUTH.SUCCESS.CHANGE_PASSWORD });
   }

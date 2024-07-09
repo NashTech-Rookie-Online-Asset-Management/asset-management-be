@@ -1,9 +1,11 @@
+import { LockService } from '../lock/lock.service';
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
+  HttpException,
   Injectable,
   NotFoundException,
-  UnauthorizedException,
 } from '@nestjs/common';
 import {
   Account,
@@ -30,7 +32,10 @@ import {
 import { UserType } from './types';
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly lockService: LockService,
+  ) {}
 
   async create(admin: UserType, createUserDto: CreateUserDto) {
     const { firstName, lastName, gender, type, location } = createUserDto;
@@ -38,8 +43,8 @@ export class UsersService {
     const dob = new Date(createUserDto.dob);
     const joinedAt = new Date(createUserDto.joinedAt);
 
-    if (!Object.values(Location).includes(admin.location)) {
-      throw new BadRequestException(Messages.ASSET.FAILED.INVALID_LOCATION);
+    if (!Object.values(Location).includes(admin?.location)) {
+      throw new BadRequestException(Messages.USER.FAILED.INVALID_LOCATION);
     }
 
     if (admin.type === createUserDto.type) {
@@ -88,9 +93,17 @@ export class UsersService {
         },
       });
       userCreated.password = password;
-      return userCreated;
+      return { ...userCreated, canDisable: true };
     } catch (error) {
-      throw new BadRequestException(Messages.USER.FAILED.CREATE);
+      throw new HttpException(
+        {
+          message: error?.message,
+          error: error?.response?.error,
+          statusCode: error?.response?.statusCode,
+        },
+        error?.getStatus(),
+        error?.getResponse(),
+      );
     }
   }
 
@@ -99,16 +112,44 @@ export class UsersService {
     userStaffCode: string,
     updateUserDto: UpdateUserDto,
   ) {
+    const lockAcquired = await this.lockService.acquireLock(
+      `user-${userStaffCode}`,
+      5,
+    );
+    if (!lockAcquired) {
+      throw new ConflictException(Messages.USER.FAILED.CONCURRENT_UPDATE);
+    }
     try {
       if (admin.staffCode === userStaffCode) {
         throw new BadRequestException(Messages.USER.FAILED.UPDATE_SELF);
       }
 
-      const userExisted = await this.findUser(
-        { staffCode: userStaffCode },
-        Messages.USER.FAILED.NOT_FOUND,
-      );
-
+      const userExisted = await this.prismaService.account.findUnique({
+        where: { staffCode: userStaffCode },
+        include: {
+          assignedTos: {
+            where: {
+              state: {
+                in: [
+                  AssignmentState.WAITING_FOR_ACCEPTANCE,
+                  AssignmentState.ACCEPTED,
+                  AssignmentState.IS_REQUESTED,
+                ],
+              },
+            },
+            include: {
+              returningRequest: {
+                where: {
+                  state: RequestState.WAITING_FOR_RETURNING,
+                },
+              },
+            },
+          },
+        },
+      });
+      if (!userExisted) {
+        throw new NotFoundException(Messages.USER.FAILED.NOT_FOUND);
+      }
       if (
         userExisted.location !== admin.location &&
         admin.type === AccountType.ADMIN
@@ -122,7 +163,15 @@ export class UsersService {
         throw new BadRequestException(Messages.USER.FAILED.UPDATE_SAME_TYPE);
       }
 
-      const { dob, gender, joinedAt, type } = updateUserDto;
+      const { dob, gender, joinedAt, type, updatedAt } = updateUserDto;
+      if (updatedAt) {
+        const newDate = new Date(updatedAt);
+
+        if (userExisted.updatedAt.getTime() !== newDate.getTime()) {
+          throw new BadRequestException(Messages.USER.FAILED.DATA_EDITED);
+        }
+      }
+
       if (dob) {
         const newDate = new Date(dob);
         userExisted.dob = newDate;
@@ -160,9 +209,34 @@ export class UsersService {
           type: true,
         },
       });
-      return userUpdated;
+      return {
+        ...userUpdated,
+        canDisable: !userExisted.assignedTos.some(
+          (assignment) =>
+            (
+              [
+                AssignmentState.WAITING_FOR_ACCEPTANCE,
+                AssignmentState.ACCEPTED,
+              ] as AssignmentState[]
+            ).includes(assignment.state) ||
+            (assignment.state === AssignmentState.IS_REQUESTED &&
+              assignment.returningRequest &&
+              assignment.returningRequest.state ===
+                RequestState.WAITING_FOR_RETURNING),
+        ),
+      };
     } catch (error) {
-      throw new BadRequestException(error.message);
+      throw new HttpException(
+        {
+          message: error.message,
+          error: error.response.error,
+          statusCode: error.response.statusCode,
+        },
+        error.getStatus(),
+        error.getResponse(),
+      );
+    } finally {
+      this.lockService.releaseLock(`user-${userStaffCode}`);
     }
   }
   private async generateUniqueStaffCode(): Promise<string> {
@@ -212,13 +286,14 @@ export class UsersService {
   }
 
   private validateJoinedDate(dob: Date, joinedAt: Date) {
+    if (joinedAt <= dob) {
+      throw new BadRequestException(Messages.USER.FAILED.JOINED_AFTER_DOB);
+    }
+
     if (!isAtLeast18YearsAfter(dob, joinedAt)) {
       throw new BadRequestException(Messages.USER.FAILED.JOINED_DATE_UNDER_AGE);
     }
 
-    if (joinedAt <= dob) {
-      throw new BadRequestException(Messages.USER.FAILED.JOINED_AFTER_DOB);
-    }
     const dayOfWeek = joinedAt.getDay();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       throw new BadRequestException(Messages.USER.FAILED.JOINED_WEEKEND);
@@ -245,28 +320,12 @@ export class UsersService {
     return similarUsernames.map((user) => user.username);
   }
 
-  private async findUser(
-    where: { username: string } | { staffCode: string },
-    message: string,
-  ) {
-    const user = await this.prismaService.account.findUnique({ where });
-
-    if (!user) {
-      throw new UnauthorizedException(message);
-    }
-
-    return user;
-  }
   private generatePassword(username: string, dob: Date): string {
     const formattedDOB = formatDate(dob);
     return `${username}@${formattedDOB}`;
   }
 
-  async selectMany(
-    username: string,
-    location: Location,
-    dto: UserPaginationDto,
-  ) {
+  async selectMany(username: string, admin: UserType, dto: UserPaginationDto) {
     const orderBy = [];
     switch (dto.sortField) {
       case FindAllUsersSortKey.FIRST_NAME:
@@ -327,7 +386,9 @@ export class UsersService {
 
     const conditions = {
       where: {
-        location: location,
+        ...(admin.type !== AccountType.ROOT
+          ? { location: admin.location }
+          : {}),
         username: {
           not: username,
         },
@@ -413,12 +474,12 @@ export class UsersService {
   }
 
   async selectOne(
-    username: string,
+    staffCode: string,
     liveUser: Partial<Account>,
   ): Promise<Partial<Account>> {
     const user = await this.prismaService.account.findFirst({
       where: {
-        username,
+        staffCode,
       },
       select: {
         id: true,
@@ -440,7 +501,10 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException(Messages.USER.FAILED.NOT_FOUND);
     }
-    if (user.location !== liveUser.location) {
+    if (
+      liveUser.type !== AccountType.ROOT &&
+      user.location !== liveUser.location
+    ) {
       throw new ForbiddenException(Messages.USER.FAILED.VIEW_NOT_SAME_LOCATION);
     }
     if (user.status === UserStatus.DISABLED) {
