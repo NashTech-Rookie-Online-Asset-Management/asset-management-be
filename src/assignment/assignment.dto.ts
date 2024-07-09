@@ -106,6 +106,7 @@ export class AssignmentPaginationDto extends PaginationDto {
   @Transform(({ value }) => value.split(','))
   readonly states?: AssignmentState[] = [
     AssignmentState.ACCEPTED,
+    AssignmentState.DECLINED,
     AssignmentState.WAITING_FOR_ACCEPTANCE,
   ];
 }
